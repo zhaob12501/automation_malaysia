@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+@author: ZhaoBin
+@file: automation_malaysia.py
+"""
 import json
 import os
 import re
 import sys
 import time
-from datetime import datetime
 
 import pymysql
 import requests
@@ -37,6 +41,7 @@ POOL = PooledDB(
 )
 
 M = PyMouse()
+
 
 class Base():
     '''
@@ -80,39 +85,39 @@ class Base():
             self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=chrome_options)
 
             self.driver.maximize_window()
-            self.wait = WebDriverWait(self.driver, 10)
+            self.wait = WebDriverWait(self.driver, 30)
 
             self.driver.get("https://mail.163.com/")
-            print(datetime.now().strftime('%H:%M:%S'))
+            print(time.strftime('%H:%M:%S'))
             self.driver.delete_all_cookies()
-            print(datetime.now().strftime('%H:%M:%S'))
+            print(0, time.strftime('%H:%M:%S'))
             # 163邮箱账号框的选择和输入
             time.sleep(2)
 
             f1 = self.driver.find_element_by_id("x-URS-iframe")
-            print(1, datetime.now().strftime('%H:%M:%S'))
+            print(1, time.strftime('%H:%M:%S'))
             self.driver.switch_to.frame(f1)
-            print(2, datetime.now().strftime('%H:%M:%S'))
+            print(2, time.strftime('%H:%M:%S'))
             self.driver.find_element_by_xpath('//div[@id = "account-box"]/div[2]/input').send_keys(self.res[1]) #"suxun941103"
             time.sleep(2)
-            print(3, datetime.now().strftime('%H:%M:%S'))
+            print(3, time.strftime('%H:%M:%S'))
             self.driver.find_element_by_xpath('//form[@id ="login-form"]/div/div[3]/div[2]/input[2]').send_keys(self.res[2]) # "739489696"
             time.sleep(2)
-            print(4, datetime.now().strftime('%H:%M:%S'))
+            print(4, time.strftime('%H:%M:%S'))
             try:
                 self.driver.find_element_by_id("dologin").click()
             except:
                 pass
             time.sleep(1)
-            print(5, datetime.now().strftime('%H:%M:%S'))
+            print(5, time.strftime('%H:%M:%S'))
             
-            print(6, datetime.now().strftime('%H:%M:%S'))
+            print(6, time.strftime('%H:%M:%S'))
             txt = '网易邮箱'
             title = self.driver.title
             try:
                 self.driver.find_element_by_xpath('//a[@class="u-btn u-btn-middle3 f-ib bgcolor f-fl"]').click()
                 print('-----------------------------')
-                print(7, datetime.now().strftime('%H:%M:%S'))
+                print(7, time.strftime('%H:%M:%S'))
                 # time.sleep(3)
             except:    
                 if txt not in title:
@@ -154,57 +159,64 @@ class Base():
             try:
                 time.sleep(1)
                 self.driver.find_element_by_xpath('//a[@class="u-btn u-btn-middle3 f-ib bgcolor f-fl"]').click()
-                print(8, datetime.now().strftime('%H:%M:%S'))
+                print(8, time.strftime('%H:%M:%S'))
             except:
                 # time.sleep(3)
-                print('继续登录出错...')
+                pass
                 
             time.sleep(2)
-            print(9, datetime.now().strftime('%H:%M:%S'))
+            print(9, time.strftime('%H:%M:%S'))
             # 点击收件箱
             try:
-                self.driver.find_element_by_xpath('//li[@id="_mail_component_72_72"]/span[@class="oz0"]').click()
+                self.driver.find_element_by_id('//div[@id="_mail_tabitem_3_51text"]').click()
+                # self.driver.find_element_by_xpath('//li[@id="_mail_component_72_72"]/span[@class="oz0"]').click()
                 # self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
             except:
                 time.sleep(2)
-                self.driver.find_element_by_xpath('//li[@id="_mail_component_72_72"]/span[@class="oz0"]').click()
-                # self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
+                # self.driver.find_element_by_xpath('//li[@id="_mail_component_72_72"]/span[@class="oz0"]').click()
+                self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
             time.sleep(2) 
-            print(10, datetime.now().strftime('%H:%M:%S'))
+            print(10, time.strftime('%H:%M:%S'))
             
             try:
+                print('准备点击收件箱')
                 # self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
                 time.sleep(2)
                 # 点击未读邮件的第一封邮件
-                self.driver.find_element_by_xpath('//div[@class = "nl0 hA0 ck0"]/div[@class = "gB0"]/div[2]').click()
-                print(11, datetime.now().strftime('%H:%M:%S'))
+                self.driver.find_element_by_xpath('//div[@class = "nl0 hA0 ck0"]/div[@class="gB0"]/div[2]').click()
+                print(11, time.strftime('%H:%M:%S'))
                 print('点击未读邮件的第一封邮件')
                 time.sleep(2)
-                print(12, datetime.now().strftime('%H:%M:%S'))
+                print(12, time.strftime('%H:%M:%S'))
                 f2 = self.driver.find_element_by_class_name("oD0")
                 time.sleep(3)
-                print(13, datetime.now().strftime('%H:%M:%S'))
+                print(13, time.strftime('%H:%M:%S'))
                 self.driver.switch_to.frame(f2)
-                print(14, datetime.now().strftime('%H:%M:%S'))
+                print(14, time.strftime('%H:%M:%S'))
                 self.driver.find_element_by_xpath('//body/div/div[4]/p[2]/a').click()
                 print("激活成功")
+                with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                    json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 激活成功!", f)
+                    f.write('\n],\n')
                 # self.all_h = self.driver.window_handles
                 # self.driver.switch_to_window(self.all_h[0])
                 # self.driver.close()
-                print(15, datetime.now().strftime('%H:%M:%S'))
+                print(15, time.strftime('%H:%M:%S'))
                 time.sleep(10)
                 act_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
                 act_data = {"email": self.res[1], "status": "3"}
                 #print(act_data)
                 #print("111"* 20)
-                print(16, datetime.now().strftime('%H:%M:%S'))
+                print(16, time.strftime('%H:%M:%S'))
                 requests.post(act_url, data=act_data)
-                print(17, datetime.now().strftime('%H:%M:%S'))
+                print(17, time.strftime('%H:%M:%S'))
                 time.sleep(3)
-            except:
+            except Exception as e:
+                print(e)
                 url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
                 data_02 = {"email": self.res[1], "status": "4"}
                 requests.post(url_02, data_02)
+                self.driver.quit()
             finally:
                 time.sleep(5)
         except:
@@ -276,17 +288,39 @@ class Base():
         print('正在登陆，请稍后...')
         try:
             al_h = self.driver.window_handles
+            print(al_h)
             self.driver.switch_to_window(al_h[0])
             self.driver.close()
             self.driver.switch_to_window(al_h[1])
         except AttributeError:
-            self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=self.chrome_options)
-            self.driver.get("https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh")
+            print('new')
+            options = self.chrome_options
+            # options.add_argument('blink-settings=imagesEnabled=false')
+            self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=options)
             self.driver.maximize_window()
-            self.wait = WebDriverWait(self.driver, 10)
+            self.driver.get("https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh")
+            print('get')
+            self.wait = WebDriverWait(self.driver, 30)
+            time.sleep(10)
+        print('sleep')
+        try:
+            self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
             time.sleep(1)
+        except:
+            pass
+        try:
             self.driver.find_element_by_class_name('ev-opt-2').click()
-
+            print('点击登录')
+            time.sleep(1)
+        except:
+            pass
+        try:
+            time.sleep(1)
+            self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
+            print('点击关闭红框')
+            time.sleep(1)
+        except:
+            pass
         time.sleep(1)
        
         password = GLOBAL_DATA[4]
@@ -294,10 +328,17 @@ class Base():
         self.driver.find_element_by_id("txtEmail").click()
 
         self.driver.find_element_by_id("txtEmail").send_keys(self.res[1])
+        time.sleep(0.5)
+        try:
+            self.driver.switch_to_alert().accept()
+        except:
+            pass
+        time.sleep(0.5)
         print('输入密码...')
         self.driver.find_element_by_id('txtPassword').click()
 
         self.driver.find_element_by_id('txtPassword').send_keys(password)
+        time.sleep(0.5)
         # element = self.driver.find_element_by_xpath('//div[@class="col-sm-4"]/img')
         # img_url = self.driver.find_element_by_xpath('//div[@class = "form-group"]/div/img').get_attribute("src")
         # print(img_url)
@@ -314,6 +355,7 @@ class Base():
         }
         result = str(ys[s[1]])
         print(result)
+        time.sleep(0.5)
         self.driver.find_element_by_id("answer").click()
 
         self.driver.find_element_by_id("answer").send_keys(result)
@@ -701,8 +743,8 @@ class Base():
             print(data_photo)
             _res = requests.post(url, data_photo)
             # print(self.res.status_code, self.res.text)
-            with open(r'{}\visa_photo\{}_visa_log.json'.format(os.getcwd(), datetime.now().strftime('%Y%m%d')), 'a+')as f:
-                json.dump(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 照片不符合规格", f)
+            with open(r'{}\visa_photo\{}_log.json'.format(os.getcwd(), time.strftime('%Y%m%d')), 'a+')as f:
+                json.dump(f"{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 照片不符合规格", f)
                 f.write('\n]\n')
             
             return -2
@@ -847,6 +889,9 @@ class Base():
                     print('付款成功！,..')
                     self.driver.save_screenshot('successful.png')
                     print('申请成功，付款成功！')
+                    with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                        json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 付款成功!", f)
+                        f.write('\n],\n')
                     url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
                     data = {"email": self.res[1], "status": "1"}
                     requests.post(url, data)
@@ -885,11 +930,14 @@ class Base():
             print(self.res_info[0][38])
             visa_data = {"email": self.res_info[0][38], "evisa": visa_url, "receipt": pay_url}
             requests.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
-
+            with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
+                f.write('\n],\n')
             time.sleep(3)
-            
+
         except:
             pass
+        self.driver.quit()
 
     # 获取电子签模块
     def get_visa(self):
@@ -899,7 +947,7 @@ class Base():
         chrome_options.add_argument('--headless')
         self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=chrome_options)
         self.driver.maximize_window()
-        self.wait = WebDriverWait(self.driver, 10)
+        self.wait = WebDriverWait(self.driver, 30)
         try:
             res, sql_geren, sql_gongg = self.res, self.res_info, self.res_group
             
@@ -913,17 +961,46 @@ class Base():
 
             time.sleep(3)
 
-            salt = "code_yunsu.png"
-            self.driver.save_screenshot(salt)
+            # salt = "code_yunsu.png"
+            # self.driver.save_screenshot(salt)
             # user = "csy518@icloud.com"
             password = '5678tyui'
+            print('sleep')
+            try:
+                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
+                time.sleep(1)
+            except:
+                pass
+            try:
+                self.driver.find_element_by_class_name('ev-opt-2').click()
+                print('点击登录')
+                time.sleep(1)
+            except:
+                pass
+            try:
+                time.sleep(1)
+                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
+                print('点击关闭红框')
+                time.sleep(1)
+            except:
+                pass
+            time.sleep(1)
+           
+            
             print('输入用户名...')
+            print(self.res[1])
             self.driver.find_element_by_id("txtEmail").click()
-            self.driver.find_element_by_id("txtEmail").send_keys(res[1])
-
+            self.driver.find_element_by_id("txtEmail").send_keys(self.res[1])
+            time.sleep(0.5)
+            try:
+                self.driver.switch_to_alert().accept()
+            except:
+                pass
+            time.sleep(0.5)
             print('输入密码...')
             self.driver.find_element_by_id('txtPassword').click()
             self.driver.find_element_by_id('txtPassword').send_keys(password)
+            time.sleep(0.5)
 
             # element = self.driver.find_element_by_xpath('//div[@class="col-sm-4"]/img')
             # img_url = self.driver.find_element_by_xpath('//div[@class = "form-group"]/div/img').get_attribute("src")
@@ -969,10 +1046,15 @@ class Base():
                 pay_url = 'https://www.windowmalaysia.my/entri/jasperpayment?appNumber=' + appnumber
                 visa_data = {"email": sql_geren[0][38], "evisa": visa_url, "receipt": pay_url}
                 requests.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
+                with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                    json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
+                    f.write('\n],\n')
                 print(visa_data)
                 print('激活完成')
+                self.driver.quit()
         except:
             print('= = = = = = = =')
+            self.driver.quit()
 
     @staticmethod 
     def data_i(d):
@@ -990,10 +1072,11 @@ class Registe:
         print('start...')
         self.res = res
         self.email = res[1]
-        self.res_info = res_info
-        self.res_group = res_group
+        self.res_info = res_info[0]
+        self.res_group = res_group[0]
         print(self.email)
         self.req = requests.Session()
+        self.req.timeout = 60
         # self.req.proxies = {'http': '114.229.36.173:26236', 'https': '114.229.36.173:26236'}
         # self.req.proxies = {'http': '127.0.0.1:8888', 'https': '127.0.0.1:8888'}
         # self.req.verify = False
@@ -1001,7 +1084,8 @@ class Registe:
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.10 Safari/537.36',
             # 'Cookie': 'JSESSIONID=F5F37F0A0403A6A3E22CE78B1E83E013; __cfduid=d08cfebc4cf65cc147d5a2cc36940edc01528342323; _ga=GA1.2.1523851791.1528442846; JSESSIONID=140CE94CB66813A49EFD0D3D4115631B; _gid=GA1.2.1105562878.1528680539; Hm_lvt_f299593a4267ae0229ba7d6a31a782d4=1528442846,1528680539; Hm_lpvt_f299593a4267ae0229ba7d6a31a782d4=1528680539'
         }
-        # self.req.proxies = {'http': self.proxy, 'https': self.proxy}
+        # ip = self.proxy
+        # self.req.proxies = {'http': ip, 'https': ip}
         self.registe_url = 'https://www.windowmalaysia.my/evisa/vlno_register.jsp?type=register'
 
         # self.registe_num = 0
@@ -1027,13 +1111,13 @@ class Registe:
                     print('in get')
                     res = self.req.get(url)
                     if res.status_code == 200:
-                        # print(res.text)
+                        print('in get over...')
                         break
                 else:
                     print('in post')
                     res = self.req.post(url, data=data)
                     if res.status_code == 200:
-                        # print(res.text)
+                        print('in post over...')
                         break
                 self.req.proxies = {'http': self.proxy, 'https': self.proxy}
             except:
@@ -1061,11 +1145,17 @@ class Registe:
         res = self.requ(re_url, data=data)
         print('请求发送成功...进入判断...')
         if 'Resend Activation Email' in res.text:
+            for _ in range(5):
+                time.sleep(1)
+                self.req.get(f'https://www.windowmalaysia.my/evisa/resendVerification?email={self.email}')
             url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
             data = {"email": self.email, "status": "1"}
             rs = requests.post(url, data=data)
             print(rs.json())
             print("注册成功...")
+            with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 注册成功!", f)
+                f.write('\n],\n')
             return 1
         # self.registe_num += 1
         print('注册失败!...')
@@ -1152,7 +1242,7 @@ class Pipe:
     @property
     def select_info(self):
         try:
-            for n1, n2 in [(1, 1), (1, 2), (1, 0), (2, 0)]:
+            for n1, n2 in [(1, 1), (1, 0), (2, 1), (2, 0)]:
                 # print(n1, n2)
                 # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 584'
                 sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where type = {n1} and urgent = {n2}'
@@ -1192,12 +1282,14 @@ def main():
         try:
             r = Registe(res, res_info, res_group)
             if (not res[3]) or (res[3] is 2):
+                print('in reg')
                 r.registe
                 time.sleep(2)
                 continue
 
             b = Base(False, res, res_info, res_group)
             if res[3] is 1 and (not res[4] or res[4] is 2):
+                print('in email')
                 b.email_163(res[4])
                 time.sleep(2)
                 if res[4]:
@@ -1205,11 +1297,13 @@ def main():
                 continue
 
             if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
+                print('in login')
                 b.login()
                 time.sleep(2)
                 continue
 
             if (not res[6] or res[6] is 2) and res[5] is 1:
+                print('in visa')
                 b.get_visa()
                 time.sleep(2)
 
@@ -1224,6 +1318,7 @@ def main():
                 pass
             try:
                 b.driver.quit()
+                # pass
             except:
                 pass
 
