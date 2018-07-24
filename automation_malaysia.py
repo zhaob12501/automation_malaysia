@@ -106,6 +106,10 @@ class Automation_malaysia():
             data_p = {"email": self.email}
             res = requests.post(url, data_p).json()
         print('注册失败!...')
+        url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
+        data = {"email": self.email, "status": "2"}
+        rs = requests.post(url, data=data)
+        print(rs.json())
         with open('xxx.html', 'wb') as f:
             f.write(res.content)
         return 0
@@ -118,19 +122,19 @@ class Automation_malaysia():
 
         reg = r'<input name="session_id" id="session_id" type="hidden" value="(.*?)">'
         da0 = re.findall(reg, res.text)[0]
-        print(da0)
+        # print(da0)
         reg = r'<input name="ipAddress" id="ipAddress" type="hidden" value="(.*?)">'
         da1 = re.findall(reg, res.text)[0]
-        print(da1)
+        # print(da1)
         reg = r'<input name="fullPage" id="fullPage" type="hidden" value="(.*?)">'
         da2 = re.findall(reg, res.text)[0]
-        print(da2)
+        # print(da2)
         reg = r'<input name="locIPAddress" id="locIPAddress" type="hidden" value="(.*?)">'
         da3 = re.findall(reg, res.text)[0]
-        print(da3)
+        # print(da3)
         reg = r'<input name="refImg" id="refImg" type="hidden" value="(.*?)">'
         da4 = re.findall(reg, res.text)[0]
-        print(da4)
+        # print(da4)
         print(len(self.res_info), len(self.res_group))
         data = {
             'session_id': da0,
@@ -161,7 +165,7 @@ class Automation_malaysia():
             'btnRegister': '注册',
         }
         print(3)
-        print(data)
+        # print(data)
         return data
 
     # 邮箱激活
@@ -172,9 +176,10 @@ class Automation_malaysia():
             if not no_win:
                 print('no window')
                 chrome_options.add_argument('blink-settings=imagesEnabled=false')
-                # chrome_options.add_argument('--headless')
-            chrome_options.add_argument('window-size=1920x3000')
-            self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=chrome_options)
+                chrome_options.add_argument('--headless')
+            # chrome_options.add_argument('window-size=1920x3000')
+            path = sys.path[0] + '\\'
+            self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=chrome_options)
             self.driver.maximize_window()
             print('163邮箱账号框的选择和输入')
             self.driver.get("https://mail.163.com/")
@@ -259,22 +264,19 @@ class Automation_malaysia():
 
             if 'VisaMalaysia' not in self.driver.page_source:
                 # 点击收件箱
-                print('点击垃圾邮箱')
+                # print('点击垃圾邮箱')
                 try:
-                    self.driver.find_element_by_id('spnHideFolders').click()
-                    self.driver.find_element_by_xpath('//span[@class="nui-tree-item-text" and @title="垃圾邮件"]').click()
-                    self.driver.find_element_by_id('dP0').click()
-                    
-                    content = self.driver.find_element_by_xpath('//body/div/div[4]/p[2]/a').get_attribute('href')
-                    self.req.get(content)
-
-                    print("激活成功")
-                    act_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                    act_data = {"email":  self.email, "status": "3"}
-                    requests.post(act_url, data=act_data)
-                    time.sleep(3)
-                    print('-' * 20)
-                # 点击垃圾邮箱
+                    self.driver.find_element_by_id('_mail_component_109_109').click()
+                    print('点击其他文件夹')
+                    time.sleep(2)
+                    tree = self.driver.find_elements_by_xpath('//div[@class="js-component-component nui-tree-item-label"]')
+                    print(f'tree 有 {len(tree)} 个')
+                    for i in range(len(tree)):
+                        if '垃圾' in tree[i].text:
+                            print('点击垃圾箱')
+                            print(i, tree[i].text)
+                            tree[i].click()
+                            print('√')
                 except Exception as e:
                     print(e)
                     time.sleep(20)
@@ -288,14 +290,14 @@ class Automation_malaysia():
                 time.sleep(2)
                 # 点击未读邮件的第一封邮件
                 self.driver.find_element_by_xpath('//div[@class = "nl0 hA0 ck0"]/div[@class = "gB0"]/div[2]').click()
-                print('点击未读邮件的第一封邮件')
+                print('点击第一封邮件')
                 time.sleep(2)
                 f2 = self.driver.find_element_by_class_name("oD0")
                 time.sleep(3)
                 self.driver.switch_to.frame(f2)
                 print('获取链接地址')
                 content = self.driver.find_element_by_xpath('//body/div/div[4]/p[2]/a')
-                print(content)
+                # print(content)
                 em_url = content.get_attribute('href')
                 print(em_url)
                 res = self.req.get(em_url)
@@ -322,438 +324,484 @@ class Automation_malaysia():
 
     # 登录-填写信息-付款
     def login(self):
-        self.img_url(self.res, self.res_info, self.res_group)
-        print('正在执行登录...')
-        index_url = 'https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh'
-        
-        res = self.req.get(index_url)
-        print('请求主页...')
-
-        reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
-        ipaddr = re.findall(reg, res.text)[0]
-        print(ipaddr)
-        url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={self.get_answer(res)}&_={int(time.time()*1000)}'
-        print(url)
-        res = self.req.get(url)
-        print(self.req.headers)
-        print(res.text)
-        print(res.status_code)
-        assert res.status_code == 200
-
-        welcome_url = 'https://www.windowmalaysia.my/evisa/welcome.jsp'
-        res = self.req.get(welcome_url)
-
-        reg = r"window\.location\.replace\('(.*?)'\);"
-        join_evisa_url = re.findall(reg, res.text)
-
-        if join_evisa_url == []:
-            print('没有数据!...')
-            return
-        join_evisa_url = join_evisa_url[0]
-        print('加入ENTRI计划')
-        res = self.req.get(join_evisa_url)
-        print('添加新的')
-
-        reg = r'<input type="hidden" name="checkAppNum1" id="checkAppNum1" value="(.*?)" />'
-        uAppNumber = re.findall(reg, res.text)
-        print(uAppNumber)
-        if len(uAppNumber) > 0:
-            uAppNumber = uAppNumber[0]
-            print('in old visa')
-            url = f'https://www.windowmalaysia.my/entri/registration.jsp?appNumber={uAppNumber}'
-            print(url)
-            res = self.req.get(url)
-            print('正在上传人脸信息...')
-
-            reg = r'<input type="hidden" name="uUser" id="uUser" value="(.*?)" />'
-            uUser = re.findall(reg, res.text)[0]
-
-            _files = {
-                'uAppNumber': (None, uAppNumber), 
-                'uUser': (None, uUser), 
-                'uPhotoFile': ('photo.png', open(r'visa_photo\photo.png', 'rb'), 'image/png'), 
-                'btnUploadPhoto': (None, '上传'), 
-            }
-            res = self.req.post('https://www.windowmalaysia.my/entri/photo', files=_files)
-            print('上传信息成功')
-        else:
-            print('in new visa')
-            registe_url = 'https://www.windowmalaysia.my/entri/registration.jsp'
-            res = self.req.get(registe_url)
-
-            reg = r'<input type="hidden" name="uAppNumber" id="uAppNumber" value="(.*?)" />'
-            uAppNumber = re.findall(reg, res.text)[0]
-
-            reg = r'<input type="hidden" name="uUser" id="uUser" value="(.*?)" />'
-            uUser = re.findall(reg, res.text)[0]
-
-            print('正在上传人脸信息...')
-            _files = {
-                'uAppNumber': (None, uAppNumber), 
-                'uUser': (None, uUser), 
-                'uPhotoFile': ('photo.png', open(r'visa_photo\photo.png', 'rb'), 'image/png'), 
-                'btnUploadPhoto': (None, '上传'), 
-            }
-            res = self.req.post('https://www.windowmalaysia.my/entri/photo', files=_files)
-            print('上传信息成功')
-
-            print('正在上传护照信息...')
-            reg = r'<input type="hidden" name="uAppNumber" id="uAppNumber" value="(.*?)" />'
-            uAppNumber = re.findall(reg, res.text)[0]
-
-            _files1 = {
-                'uAppNumber': (None, uAppNumber), 
-                'uUser': (None, uUser), 
-                'uPassportFile': ('hz.png', open(r'visa_photo\hz.png', 'rb'), 'image/png'), 
-                'btnUploadPassport': (None, '上传'), 
-            }
-
-            res = self.req.post( 'https://www.windowmalaysia.my/entri/passport', files=_files1)
-            print('上传信息成功')
-
-
-            reg = r'<input type="hidden" name="appNumber" id="appNumber" value="(.*?)" />'
-            uAppNumber = re.findall(reg, res.text)[0]
-
-            print('正在上传航班信息...')
-            _files = {
-                'uAppNumber': (None, uAppNumber), 
-                'uUser': (None, uUser), 
-                'uItineraryFile': ('hb.png', open(r'visa_photo\hb.png', 'rb'), 'image/png'), 
-                'btnUploadItinerary': (None, '上传'), 
-            }
-            res = self.req.post('https://www.windowmalaysia.my/entri/itinerary', files=_files)
-            print('上传信息成功')
-
-
-            if self.res_info[45]:
-                if url.split('.')[-1] != 'pdf':
-                    print('正在上传其他信息...')
-                    _files1 = {
-                        'uAppNumber': (None, uAppNumber), 
-                        'uUser': (None, uUser), 
-                        'uOtherFile': ('other.pdf', open(r'visa_photo\other.pdf', 'rb'), 'application/pdf'), 
-                        'btnUploadOtherDocument': (None, '上传'), 
-                    }
-                    res = self.req.post('https://www.windowmalaysia.my/entri/itinerary', files=_files1)
-                    print('上传信息成功')
-                else:
-                    print('其他文件格式不正确')
-
-
-        reg = r'<input type="hidden" name="appVisaNumber" id="appVisaNumber" value="(.*?)" />'
-        appVisaNumber = re.findall(reg, res.text)
-        data = {
-            'countryId': '47',
-            'user': uUser,
-            'appNumber': uAppNumber,
-            'appVisaNumber': appVisaNumber,
-            'appEmail': self.email,
-            'appPurposeStay': '11',
-            'expatCategory': '0',
-            'principleName': '',
-            'occupation':'',
-            'expatRelationship': '0',
-            'appFirstName': self.res_info[31],
-            'appLastName': self.res_info[29],
-            'appGender':1 if self.res_info[3] == '男' else 2,
-            'appDob': self.res_info[5],
-            'appNationality': '47',
-            'appPhoneNumber': self.res_info[10],
-            'appDocType': '1',
-            'appDocNumber': self.res_info[12],
-            'appDocCountryIssued': '47',
-            'appDocIssueDt': f'{self.res_info[34]:0>2}/{self.res_info[33]:0>2}/{self.res_info[32]}',
-            'appDocIssuedDay': self.res_info[34],
-            'appDocIssuedMonth': self.res_info[33],
-            'appDocIssuedYear': self.res_info[32],
-            'appDocExpiryDt': f'{self.res_info[37]:0>2}/{self.res_info[36]:0>2}/{self.res_info[35]}',
-            'appDocExpiredDay': self.res_info[37],
-            'appDocExpiredMonth': self.res_info[36],
-            'appDocExpiredYear': self.res_info[35],
-            'appTravelDtStart': f'{self.res_group[27]:0>2}/{self.res_group[26]:0>2}/{self.res_group[25]}',
-            'appTravelDayStart': self.res_group[27],
-            'appTravelMonthStart': self.res_group[26],
-            'appTravelYearStart': self.res_group[25],
-            'countryRouteMalaysia': '47',
-            'countryTransitMalaysia': '0',
-            'countryDestinationMalaysia': '131',
-            'appEnterVia': 'Air',
-            'appTravelDtEnd': f'{self.res_group[30]:0>2}/{self.res_group[29]:0>2}/{self.res_group[28]}',
-            'appTravelDayEnd': self.res_group[30],
-            'appTravelMonthEnd': self.res_group[29],
-            'appTravelYearEnd': self.res_group[28],
-            'countryRouteHome': '131',
-            'countryTransitHome': '0',
-            'countryDestinationHome': '47',
-            'appExitVia': 'Air',
-            'appAddress1': self.res_info[9],
-            'appAddress2': '',
-            'appPostcode': self.res_info[26],
-            'appCity': self.res_info[25],
-            'showProvince': 'true',
-            'appProvince': self.res_info[24],
-            'appMysAddress1': self.res_group[31],
-            'appMysAddress2': self.res_group[18],
-            'appMysPostcode': self.res_group[24],
-            'appMysCity': self.res_group[36],
-            'paymentMethod': 'alipay',
-            'travelExceed': '0',
-            'termCondition': 'on',
-            'btnSave': 'AGREE'
-        }
-        print(data)
-        res = self.req.post(' https://www.windowmalaysia.my/entri/registration', data=data)
-        # print(res)
-        # 查看照片是否合格
-        print(1)
-        url = f'https://www.windowmalaysia.my/entri/updatePhoto?appNumber={uAppNumber}&dataX=0&dataY=0&dataWidth=170&dataHeight=238&dataRotate=0&isEdit=false'
-        res = self.req.get(url)
-        print(2)
-
-        if '系统检测到您的照片不符合规格。它可能是以下之一：' in res.text:
-            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
-            data = {"email": self.email, "status": "2"}
-            requests.post(url, data)
-            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
-            data_photo = {"email": self.email, "text": "照片不合格"}
-            print(data_photo)
-            _res = requests.post(url, data_photo)
-            return -1
-        else:
-            print('yes')
-            time.sleep(5)
-        print(3)
-        time.sleep(3)
-        #支付宝付款
-        while True:
-            res = self.req.get(f'https://www.windowmalaysia.my/entri/payment.jsp?appNumber={uAppNumber}')
-            print(res.status_code)
-            time.sleep(2)
-            if res.status_code != 500:
-                break
-        ret = r'<input type="hidden" name="total_fee" id="total_fee" value="(.*?)">'
-        total_fee = re.findall(ret,res.text)[0]
-
-        ret = r'<input type="hidden" name="body" id="body" value="(.*?)">'
-        body = re.findall(ret,res.text)[0]
-        ret = r'<input type="hidden" name="branchCode" id="branchCode" value="(.*?)">'
-        branchCode = re.findall(ret,res.text)[0]
-        ret = r'<input type="hidden" name="keyOutTradeNo" id="keyOutTradeNo" value="(.*?)">'
-        keyOutTradeNo = re.findall(ret,res.text)[0]
-        ret = '<input type="hidden" name="user" id="user" value="(.*?)" />'
-        user = re.findall(ret,res.text)[0]
-        url = 'https://www.windowmalaysia.my/entri/split_alipayapi.jsp'
-        data = {
-            'subject': uAppNumber,
-            'total_fee': total_fee,
-            'body': body,
-            'branchCode': branchCode,
-            'keyOutTradeNo': keyOutTradeNo,
-            'appNumber': uAppNumber,
-            'user': user,
-            'btnSubmit': '继续付款'
-        }
-        print(data)
-        resp = self.req.post(url,data=data)
-
-        print(resp.status_code)
-        subject = uAppNumber
-        ret = r'<input type="hidden" name=\'sign\' value=\'(.*?)\' />'
-        sign = re.findall(ret,resp.text)[0]
-        print(sign)
-        ret = r'<input type="hidden" name=\'split_fund_info\' value=\'(.*?)\' />'
-        split_fund_info = re.findall(ret, resp.text)[0]
-        print(split_fund_info)
-        ret = r'<input type="hidden" name=\'notify_url\' value=\'(.*?)\' />'
-        notify_url = re.findall(ret,resp.text)[0]
-        print(notify_url)
-        ret = r'<input type="hidden" name=\'body\' value=\'(.*?)\' />'
-        body = re.findall(ret, resp.text)[0]
-        print(body)
-        ret = r'<input type="hidden" name=\'product_code\' value=\'(.*?)\' />'
-        product_code = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'out_trade_no\' value=\'(.*?)\' />'
-        out_trade_no = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'partner\' value=\'(.*?)\' />'
-        partner = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'service\' value=\'(.*?)\' />'
-        service = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'rmb_fee\' value=\'(.*?)\' />'
-        rmb_fee = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'return_url\' value=\'(.*?)\' />'
-        return_url = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'currency\' value=\'(.*?)\' />'
-        currency = re.findall(ret, resp.text)[0]
-        ret = r'<input type="hidden" name=\'sign_type\' value=\'(.*?)\' />'
-        sign_type = re.findall(ret, resp.text)[0]
-        apliay_url = f'https://mapi.alipay.com/gateway.do?subject={subject}&sign={sign}&split_fund_info={split_fund_info}&notify_url={notify_url}&body={body}&product_code={product_code}&out_trade_no={out_trade_no}&partner={partner}&service={service}&rmb_fee={rmb_fee}&return_url={return_url}&currency={currency}&sign_type={sign_type}'
-
-        self.apliay_url = apliay_url
-
-        while True:
-            if self.alipay():
-                break
-
-    # 付款
-    def alipay(self):
-
-        REQ = requests.Session()
-        REQ.timeout = 30
-
-        
-        options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
-        path = sys.path[0] + '\\'
-        self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=options)
-        self.driver.maximize_window()
-        self.driver.get(self.apliay_url)
         try:
-            try:
-                # 点击账号密码付款
-                time.sleep(2)
-                self.driver.find_element_by_id("J_tip_qr").click()
-                time.sleep(1)
-
-            except Exception as e:
-                pass
-
-            print('准备输入用户名密码！')
-            try:
-                print('输入用户名...')
-                self.driver.find_element_by_id("J_tLoginId").click()
-                time.sleep(2)
-                self.driver.find_element_by_id("J_tLoginId").send_keys(GLOBAL_DATA[5])
-                time.sleep(2)
-                print('输入密码...')
-                self.driver.find_element_by_id("payPasswd_rsainput").click()
-                time.sleep(2)
-                self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
-                print('检查是否有验证码')
-                self.driver.save_screenshot("visa_photo/captcha.png")
-                time.sleep(1)
-                # print(self.driver.page_source)
-                time.sleep(1)
-
-                # with open('visa_photo/zfb_code.html', 'w') as f:
-                #     f.write(self.driver.page_source)
-                print('- - ' * 50)
-                if '验证码' in self.driver.page_source:
-                    print('- *' * 10)
-                    try:
-                        # checkCodeImg1526628428404
-                        # checkCodeImg1526629233305
-                        captcha_element = self.driver.find_element_by_xpath(
-                            '//img[@class="checkCodeImg"]')
-                        self.driver.find_element_by_xpath(
-                            '//input[@class="ui-input ui-input-checkcode"]').click()
-                        print('* ' * 50)
-                        # print(element)
-                        captcha_left = captcha_element.location['x']
-                        captcha_top = captcha_element.location['y']
-                        captcha_right = captcha_element.location['x'] + captcha_element.size['width']
-                        captcha_bottom = captcha_element.location['y'] + captcha_element.size['height']
-                        print(captcha_left, captcha_top, captcha_right)
-                        img = Image.open('visa_photo/captcha.png')
-                        img = img.crop((captcha_left, captcha_top, captcha_right, captcha_bottom))
-                        img.save('code_yunsu.png')
-                        time.sleep(0.5)
-                        # 获取验证码结果
-                        result2 = upload(3040)
-                        yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
-                        data = {'type': '3', 'num': '25'}
-                        REQ.post(yunsu_url, data=data)
-                        print(result2)
-                        self.driver.find_element_by_xpath(
-                            '//input[@class="ui-input ui-input-checkcode"]').send_keys(
-                            result2)
-                    except Exception as e:
-                        print(e)
-
-                # 点击付款
-                print('点击付款...')
-                time.sleep(2)
-                self.driver.find_element_by_id("J_newBtn").click()
-                time.sleep(2)
-                while True:
-                    if '验证码错误' in self.driver.page_source:
-                        print('输入密码...')
-                        self.driver.find_element_by_id("payPasswd_rsainput").click()
-                        time.sleep(1)
-                        self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
-                        img = Image.open('visa_photo/captcha.png')
-                        img = img.crop((captcha_left, captcha_top, captcha_right- 1, captcha_bottom ))
-                        img.save('code_yunsu.png')
-                        # 获取验证码结果
-                        result2 = upload(3040)
-                        yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
-                        data = {'type': '3', 'num': '20'}
-                        REQ.post(yunsu_url, data=data)
-                        self.driver.find_element_by_xpath(
-                            '//input[@class="ui-input ui-input-checkcode"]').click()
-                        self.driver.find_element_by_xpath(
-                            '//input[@class="ui-input ui-input-checkcode"]').clear()
-                        print(result2)
-                        self.driver.find_element_by_xpath(
-                            '//input[@class="ui-input ui-input-checkcode"]').send_keys(
-                            result2)
-                        # 点击付款
-                        print('点击付款...')
-                        time.sleep(1)
-                        self.driver.find_element_by_id("J_newBtn").click()
-                        time.sleep(1)
-                    else:
-                        break
-            except Exception as e:
-                print(e)
-                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
-                data = {"email": self.res[1], "status": "2"}
-                REQ.post(url, data)
-                print('00000000')
-                return 0
-            print('输入付款账号结束，进入确认付款')
+            self.img_url(self.res, self.res_info, self.res_group)
+            print('正在执行登录...')
+            index_url = 'https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh'
             
-            try:
-                for i in range(2, 10):
-                    self.driver.find_element_by_id("payPassword_container").click()
-                    time.sleep(3)
-                    print('输入支付密码！...')
-                    
-                    ActionChains(self.driver).send_keys(Keys.NUMPAD1, Keys.NUMPAD8, Keys.NUMPAD5, Keys.NUMPAD8,
-                                                        Keys.NUMPAD8,
-                                                        Keys.NUMPAD8).perform()
-                    time.sleep(3)
-                    self.driver.find_element_by_xpath('//*[@id="J_authSubmit"]').click()
-                    time.sleep(5)
-                    if '您已成功付款' in self.driver.page_source:
-                        print('付款成功！,..')
-                        self.driver.save_screenshot('successful.png')
-                        print('申请成功，付款成功！')
-                        with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
-                            json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 付款成功!", f)
-                            f.write('\n],\n')
-                        url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
-                        data = {"email": self.res[1], "status": "1"}
-                        REQ.post(url, data)
-                        return 1
+            res = self.req.get(index_url)
+            print('请求主页...')
+
+            reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
+            ipaddr = re.findall(reg, res.text)[0]
+            # print(ipaddr)
+            url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={self.get_answer(res)}&_={int(time.time()*1000)}'
+            # print(url)
+            res = self.req.get(url)
+            # print(self.req.headers)
+            # print(res.text)
+            # print(res.status_code)
+            assert res.status_code == 200
+
+            welcome_url = 'https://www.windowmalaysia.my/evisa/welcome.jsp'
+            res = self.req.get(welcome_url)
+
+            reg = r"window\.location\.replace\('(.*?)'\);"
+            join_evisa_url = re.findall(reg, res.text)
+
+            if join_evisa_url == []:
+                print('没有数据!...')
+                return
+            join_evisa_url = join_evisa_url[0]
+            print('加入ENTRI计划')
+            res = self.req.get(join_evisa_url)
+            print('添加新的')
+
+            reg = r'<input type="hidden" name="checkAppNum1" id="checkAppNum1" value="(.*?)" />'
+            uAppNumber = re.findall(reg, res.text)
+            print(uAppNumber)
+            if len(uAppNumber) > 0:
+                uAppNumber = uAppNumber[0]
+                print('in old visa')
+                url = f'https://www.windowmalaysia.my/entri/registration.jsp?appNumber={uAppNumber}'
+                # print(url)
+                res = self.req.get(url)
+                print('正在上传人脸信息...')
+
+                reg = r'<input type="hidden" name="uUser" id="uUser" value="(.*?)" />'
+                uUser = re.findall(reg, res.text)[0]
+
+                _files = {
+                    'uAppNumber': (None, uAppNumber), 
+                    'uUser': (None, uUser), 
+                    'uPhotoFile': ('photo.png', open(r'visa_photo\photo.png', 'rb'), 'image/png'), 
+                    'btnUploadPhoto': (None, '上传'), 
+                }
+                res = self.req.post('https://www.windowmalaysia.my/entri/photo', files=_files)
+                print('上传信息成功')
+            else:
+                print('in new visa')
+                registe_url = 'https://www.windowmalaysia.my/entri/registration.jsp'
+                res = self.req.get(registe_url)
+
+                reg = r'<input type="hidden" name="uAppNumber" id="uAppNumber" value="(.*?)" />'
+                uAppNumber = re.findall(reg, res.text)[0]
+
+                reg = r'<input type="hidden" name="uUser" id="uUser" value="(.*?)" />'
+                uUser = re.findall(reg, res.text)[0]
+
+                print('正在上传人脸信息...')
+                _files = {
+                    'uAppNumber': (None, uAppNumber), 
+                    'uUser': (None, uUser), 
+                    'uPhotoFile': ('photo.png', open(r'visa_photo\photo.png', 'rb'), 'image/png'), 
+                    'btnUploadPhoto': (None, '上传'), 
+                }
+                res = self.req.post('https://www.windowmalaysia.my/entri/photo', files=_files)
+                print('上传信息成功')
+
+                print('正在上传护照信息...')
+                reg = r'<input type="hidden" name="uAppNumber" id="uAppNumber" value="(.*?)" />'
+                uAppNumber = re.findall(reg, res.text)[0]
+
+                _files1 = {
+                    'uAppNumber': (None, uAppNumber), 
+                    'uUser': (None, uUser), 
+                    'uPassportFile': ('hz.png', open(r'visa_photo\hz.png', 'rb'), 'image/png'), 
+                    'btnUploadPassport': (None, '上传'), 
+                }
+
+                res = self.req.post( 'https://www.windowmalaysia.my/entri/passport', files=_files1)
+                print('上传信息成功')
+
+
+                reg = r'<input type="hidden" name="appNumber" id="appNumber" value="(.*?)" />'
+                uAppNumber = re.findall(reg, res.text)[0]
+
+                print('正在上传航班信息...')
+                _files = {
+                    'uAppNumber': (None, uAppNumber), 
+                    'uUser': (None, uUser), 
+                    'uItineraryFile': ('hb.png', open(r'visa_photo\hb.png', 'rb'), 'image/png'), 
+                    'btnUploadItinerary': (None, '上传'), 
+                }
+                res = self.req.post('https://www.windowmalaysia.my/entri/itinerary', files=_files)
+                print('上传信息成功')
+
+
+                if self.res_info[45]:
+                    if url.split('.')[-1] != 'pdf':
+                        print('正在上传其他信息...')
+                        _files1 = {
+                            'uAppNumber': (None, uAppNumber), 
+                            'uUser': (None, uUser), 
+                            'uOtherFile': ('other.pdf', open(r'visa_photo\other.pdf', 'rb'), 'application/pdf'), 
+                            'btnUploadOtherDocument': (None, '上传'), 
+                        }
+                        res = self.req.post('https://www.windowmalaysia.my/entri/itinerary', files=_files1)
+                        print('上传信息成功')
                     else:
-                        self.driver.find_element_by_xpath('//*[@id="J_GoBack_nobodyknows"]').click()
-                        time.sleep(2)
-                        self.driver.find_element_by_xpath('//div[@id="J-rcChannels"]/div/div/a[1]').click()
-                        time.sleep(2)
-                        self.driver.find_element_by_xpath(f'//*[@id="J_SavecardList"]/li[{i}]').click()
-            except Exception as e:
-                print('出现错误', e)
-                time.sleep(5)
+                        print('其他文件格式不正确')
+
+
+            reg = r'<input type="hidden" name="appVisaNumber" id="appVisaNumber" value="(.*?)" />'
+            appVisaNumber = re.findall(reg, res.text)
+            data = {
+                'countryId': '47',
+                'user': uUser,
+                'appNumber': uAppNumber,
+                'appVisaNumber': appVisaNumber,
+                'appEmail': self.email,
+                'appPurposeStay': '11',
+                'expatCategory': '0',
+                'principleName': '',
+                'occupation':'',
+                'expatRelationship': '0',
+                'appFirstName': self.res_info[31],
+                'appLastName': self.res_info[29],
+                'appGender':1 if self.res_info[3] == '男' else 2,
+                'appDob': self.res_info[5],
+                'appNationality': '47',
+                'appPhoneNumber': self.res_info[10],
+                'appDocType': '1',
+                'appDocNumber': self.res_info[12],
+                'appDocCountryIssued': '47',
+                'appDocIssueDt': f'{self.res_info[34]:0>2}/{self.res_info[33]:0>2}/{self.res_info[32]}',
+                'appDocIssuedDay': self.res_info[34],
+                'appDocIssuedMonth': self.res_info[33],
+                'appDocIssuedYear': self.res_info[32],
+                'appDocExpiryDt': f'{self.res_info[37]:0>2}/{self.res_info[36]:0>2}/{self.res_info[35]}',
+                'appDocExpiredDay': self.res_info[37],
+                'appDocExpiredMonth': self.res_info[36],
+                'appDocExpiredYear': self.res_info[35],
+                'appTravelDtStart': f'{self.res_group[27]:0>2}/{self.res_group[26]:0>2}/{self.res_group[25]}',
+                'appTravelDayStart': self.res_group[27],
+                'appTravelMonthStart': self.res_group[26],
+                'appTravelYearStart': self.res_group[25],
+                'countryRouteMalaysia': '47',
+                'countryTransitMalaysia': '0',
+                'countryDestinationMalaysia': '131',
+                'appEnterVia': 'Air',
+                'appTravelDtEnd': f'{self.res_group[30]:0>2}/{self.res_group[29]:0>2}/{self.res_group[28]}',
+                'appTravelDayEnd': self.res_group[30],
+                'appTravelMonthEnd': self.res_group[29],
+                'appTravelYearEnd': self.res_group[28],
+                'countryRouteHome': '131',
+                'countryTransitHome': '0',
+                'countryDestinationHome': '47',
+                'appExitVia': 'Air',
+                'appAddress1': self.res_info[9],
+                'appAddress2': '',
+                'appPostcode': self.res_info[26],
+                'appCity': self.res_info[25],
+                'showProvince': 'true',
+                'appProvince': self.res_info[24],
+                'appMysAddress1': self.res_group[31],
+                'appMysAddress2': self.res_group[18],
+                'appMysPostcode': self.res_group[24],
+                'appMysCity': self.res_group[36],
+                'paymentMethod': 'alipay',
+                'travelExceed': '0',
+                'termCondition': 'on',
+                'btnSave': 'AGREE'
+            }
+            # print(data)
+            res = self.req.post('https://www.windowmalaysia.my/entri/registration', data=data)
+            if 'egistration=alreadyExist' in res.url:
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                data_photo = {"email": self.email, "text": "重复提交"}
+                print(data_photo)
+                _res = requests.post(url, data_photo)
+            elif 'registration=fail' in res.url:
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                data_photo = {"email": self.email, "text": "有效期内"}
+                print(data_photo)
+                _res = requests.post(url, data_photo)
+            elif 'photo_editor' not in res.url:
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                data_photo = {"email": self.email, "text": "护照过期"}
+                print(data_photo)
+                _res = requests.post(url, data_photo)
+            # print(res)
+            # 查看照片是否合格
+            print('进入照片页')
+            url = f'https://www.windowmalaysia.my/entri/updatePhoto?appNumber={uAppNumber}&dataX=0&dataY=0&dataWidth=170&dataHeight=238&dataRotate=0&isEdit=false'
+            res = self.req.get(url)
+            print('发送请求，进行照片判断')
+
+            if '系统检测到您的照片不符合规格。它可能是以下之一：' in res.text:
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
-                data = {"email": self.res[1], "status": "2"}
-                REQ.post(url, data)
-                return 0
-        finally:
+                data = {"email": self.email, "status": "2"}
+                requests.post(url, data)
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                data_photo = {"email": self.email, "text": "照片不合格"}
+                print(data_photo)
+                _res = requests.post(url, data_photo)
+                return -1
+            else:
+                print('照片通过')
+                time.sleep(5)
+            
+            time.sleep(3)
+            #支付宝付款
+            print('准备进入支付宝付款')
+            while True:
+                res = self.req.get(f'https://www.windowmalaysia.my/entri/payment.jsp?appNumber={uAppNumber}')
+                # print(res.status_code)
+                time.sleep(2)
+                if res.status_code != 500:
+                    break
+            ret = r'<input type="hidden" name="total_fee" id="total_fee" value="(.*?)">'
+            total_fee = re.findall(ret,res.text)[0]
+
+            ret = r'<input type="hidden" name="body" id="body" value="(.*?)">'
+            body = re.findall(ret,res.text)[0]
+            ret = r'<input type="hidden" name="branchCode" id="branchCode" value="(.*?)">'
+            branchCode = re.findall(ret,res.text)[0]
+            ret = r'<input type="hidden" name="keyOutTradeNo" id="keyOutTradeNo" value="(.*?)">'
+            keyOutTradeNo = re.findall(ret,res.text)[0]
+            ret = '<input type="hidden" name="user" id="user" value="(.*?)" />'
+            user = re.findall(ret,res.text)[0]
+            url = 'https://www.windowmalaysia.my/entri/split_alipayapi.jsp'
+            data = {
+                'subject': uAppNumber,
+                'total_fee': total_fee,
+                'body': body,
+                'branchCode': branchCode,
+                'keyOutTradeNo': keyOutTradeNo,
+                'appNumber': uAppNumber,
+                'user': user,
+                'btnSubmit': '继续付款'
+            }
+            print(data)
+
+            resp = self.req.post(url,data=data)
+
+            print(resp.status_code)
+
+            subject = uAppNumber
+            ret = r'<input type="hidden" name=\'sign\' value=\'(.*?)\' />'
+            sign = re.findall(ret,resp.text)[0]
+            # print(sign)
+            ret = r'<input type="hidden" name=\'split_fund_info\' value=\'(.*?)\' />'
+            split_fund_info = re.findall(ret, resp.text)[0]
+            # print(split_fund_info)
+            ret = r'<input type="hidden" name=\'notify_url\' value=\'(.*?)\' />'
+            notify_url = re.findall(ret,resp.text)[0]
+            # print(notify_url)
+            ret = r'<input type="hidden" name=\'body\' value=\'(.*?)\' />'
+            body = re.findall(ret, resp.text)[0]
+            # print(body)
+            ret = r'<input type="hidden" name=\'product_code\' value=\'(.*?)\' />'
+            product_code = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'out_trade_no\' value=\'(.*?)\' />'
+            out_trade_no = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'partner\' value=\'(.*?)\' />'
+            partner = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'service\' value=\'(.*?)\' />'
+            service = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'rmb_fee\' value=\'(.*?)\' />'
+            rmb_fee = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'return_url\' value=\'(.*?)\' />'
+            return_url = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'currency\' value=\'(.*?)\' />'
+            currency = re.findall(ret, resp.text)[0]
+            ret = r'<input type="hidden" name=\'sign_type\' value=\'(.*?)\' />'
+            sign_type = re.findall(ret, resp.text)[0]
+            apliay_url = f'https://mapi.alipay.com/gateway.do?subject={subject}&sign={sign}&split_fund_info={split_fund_info}&notify_url={notify_url}&body={body}&product_code={product_code}&out_trade_no={out_trade_no}&partner={partner}&service={service}&rmb_fee={rmb_fee}&return_url={return_url}&currency={currency}&sign_type={sign_type}'
+
+            self.apliay_url = apliay_url
+
+            cookies = resp.cookies.get_dict()
+
+
+            REQ = requests.Session()
+            REQ.timeout = 30
+
+            
+            options = webdriver.ChromeOptions()
+            # options.add_argument('--headless')
+            path = sys.path[0] + '\\'
+            self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=options)
+            for key, val in cookies.items():
+                self.driver.add_cookie({'name': key,'value': val})
+            self.driver.maximize_window()
+            self.driver.get(self.apliay_url)
             try:
-                self.driver.quit()
-            except:
-                pass
+                try:
+                    # 点击账号密码付款
+                    print('点击账号密码付款')
+                    time.sleep(2)
+                    self.driver.find_element_by_id("J_tip_qr").click()
+                    time.sleep(1)
+
+                except Exception as e:
+                    pass
+
+                print('准备输入用户名密码！')
+                try:
+                    print('输入用户名...')
+                    self.driver.find_element_by_id("J_tLoginId").click()
+                    time.sleep(2)
+                    self.driver.find_element_by_id("J_tLoginId").send_keys(GLOBAL_DATA[5])
+                    time.sleep(2)
+                    print('输入密码...')
+                    self.driver.find_element_by_id("payPasswd_rsainput").click()
+                    time.sleep(2)
+                    self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
+                    print('检查是否有验证码')
+                    self.driver.save_screenshot("visa_photo/captcha.png")
+                    time.sleep(1)
+                    # print(self.driver.page_source)
+                    time.sleep(1)
+
+                    # with open('visa_photo/zfb_code.html', 'w') as f:
+                    #     f.write(self.driver.page_source)
+                    # print('- - ' * 50)
+                    if '验证码' in self.driver.page_source:
+                        print('- *' * 10, '\n', '有验证码， 正在识别...')
+                        try:
+                            # checkCodeImg1526628428404
+                            # checkCodeImg1526629233305
+                            captcha_element = self.driver.find_element_by_xpath(
+                                '//img[@class="checkCodeImg"]')
+                            self.driver.find_element_by_xpath(
+                                '//input[@class="ui-input ui-input-checkcode"]').click()
+                            # print('* ' * 50)
+                            # print(element)
+                            captcha_left = captcha_element.location['x']
+                            captcha_top = captcha_element.location['y']
+                            captcha_right = captcha_element.location['x'] + captcha_element.size['width']
+                            captcha_bottom = captcha_element.location['y'] + captcha_element.size['height']
+                            # print(captcha_left, captcha_top, captcha_right)
+                            img = Image.open('visa_photo/captcha.png')
+                            img = img.crop((captcha_left, captcha_top, captcha_right, captcha_bottom))
+                            img.save('code_yunsu.png')
+                            time.sleep(0.5)
+                            # 获取验证码结果
+                            result2 = upload(3040)
+                            yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
+                            data = {'type': '3', 'num': '25'}
+                            REQ.post(yunsu_url, data=data)
+                            print(result2)
+                            self.driver.find_element_by_xpath(
+                                '//input[@class="ui-input ui-input-checkcode"]').send_keys(
+                                result2)
+                        except Exception as e:
+                            print(e)
+
+                    # 点击付款
+                    print('点击付款...')
+                    time.sleep(2)
+                    self.driver.find_element_by_id("J_newBtn").click()
+                    time.sleep(2)
+                    while True:
+                        if '验证码错误' in self.driver.page_source:
+                            print('验证码错误, 重新识别...')
+                            print('输入密码...')
+                            self.driver.find_element_by_id("payPasswd_rsainput").click()
+                            time.sleep(1)
+                            self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
+                            img = Image.open('visa_photo/captcha.png')
+                            img = img.crop((captcha_left, captcha_top, captcha_right- 1, captcha_bottom ))
+                            img.save('code_yunsu.png')
+                            # 获取验证码结果
+                            result2 = upload(3040)
+                            yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
+                            data = {'type': '3', 'num': '20'}
+                            REQ.post(yunsu_url, data=data)
+                            self.driver.find_element_by_xpath(
+                                '//input[@class="ui-input ui-input-checkcode"]').click()
+                            self.driver.find_element_by_xpath(
+                                '//input[@class="ui-input ui-input-checkcode"]').clear()
+                            print(result2)
+                            self.driver.find_element_by_xpath(
+                                '//input[@class="ui-input ui-input-checkcode"]').send_keys(
+                                result2)
+                            # 点击付款
+                            print('点击付款...')
+                            time.sleep(1)
+                            self.driver.find_element_by_id("J_newBtn").click()
+                            time.sleep(1)
+                        else:
+                            break
+                except Exception as e:
+                    print(e)
+                    url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
+                    data = {"email": self.res[1], "status": "2"}
+                    REQ.post(url, data)
+                    print('00000000')
+                    return 0
+                print('输入付款账号结束，进入确认付款')
+                time.sleep(3)
+                try:
+                    for i in range(2, 10):
+                        self.driver.find_element_by_id("payPassword_container").click()
+                        time.sleep(3)
+                        print('输入支付密码！...')
+                        
+                        ActionChains(self.driver).send_keys(Keys.NUMPAD1, Keys.NUMPAD8, Keys.NUMPAD5, Keys.NUMPAD8,
+                                                            Keys.NUMPAD8,
+                                                            Keys.NUMPAD8).perform()
+                        time.sleep(3)
+                        self.driver.find_element_by_xpath('//*[@id="J_authSubmit"]').click()
+                        time.sleep(5)
+                        if '您已成功付款' in self.driver.page_source:
+                            print('付款成功！,..')
+                            self.driver.save_screenshot('successful.png')
+                            print('申请成功，付款成功！')
+                            with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                                json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 付款成功!", f)
+                                f.write('\n],\n')
+                            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
+                            data = {"email": self.res[1], "status": "1"}
+                            REQ.post(url, data)
+                            time.sleep(20)
+                            return 1
+                        else:
+                            self.driver.find_element_by_xpath('//*[@id="J_GoBack_nobodyknows"]').click()
+                            time.sleep(2)
+                            self.driver.find_element_by_xpath('//div[@id="J-rcChannels"]/div/div/a[1]').click()
+                            time.sleep(2)
+                            self.driver.find_element_by_xpath(f'//*[@id="J_SavecardList"]/li[{i}]').click()
+                except Exception as e:
+                    print('出现错误', e)
+                    time.sleep(5)
+                    url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
+                    data = {"email": self.res[1], "status": "2"}
+                    REQ.post(url, data)
+                    return 0
+                try:
+                    # 点击打印按钮
+                    self.driver.find_element_by_id("btnPrint").click()
+                    time.sleep(5)
+                    num = self.driver.window_handles
+                    # 获取当前页句柄
+                    self.driver.switch_to_window(num[1])
+                    url = self.driver.current_url.split("jasper")
+                    time.sleep(3)
+                    visa_url = url[0] + "note" + url[1]
+                    print(visa_url)
+                    pay_url = url[0] + "jasperpayment" + url[1]
+                    print(pay_url)
+                    print(self.res_info[0][38])
+                    visa_data = {"email": self.res_info[0][38], "evisa": visa_url, "receipt": pay_url}
+                    REQ.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
+                    with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                        json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
+                        f.write('\n],\n')
+                    time.sleep(3)
+                except:
+                    pass
+            finally:
+                try:
+                    self.driver.quit()
+                except:
+                    pass
+        except:
+            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
+            data = {"email": self.res[1], "status": "2"}
+            requests.post(url, data)
 
 
     # 获取电子签模块
@@ -766,13 +814,13 @@ class Automation_malaysia():
 
         reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
         ipaddr = re.findall(reg, res.text)[0]
-        print(ipaddr)
+        # print(ipaddr)
         url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={self.get_answer(res)}&_={int(time.time()*1000)}'
-        print(url)
+        # print(url)
         res = self.req.get(url)
-        print(self.req.headers)
+        # print(self.req.headers)
         print(res.text)
-        print(res.status_code)
+        # print(res.status_code)
         assert res.status_code == 200
         welcome_url = 'https://www.windowmalaysia.my/evisa/welcome.jsp'
         res = self.req.get(welcome_url)
@@ -786,7 +834,7 @@ class Automation_malaysia():
         join_evisa_url = join_evisa_url[0]
         print('加入ENTRI计划')
         res = self.req.get(join_evisa_url)
-        if '打印' in res.text:
+        if '繼續' not in res.text:
             appnumber = res.text.split('appNumber=')[1].split('">')[0]
             print(appnumber)
             visa_url = 'https://www.windowmalaysia.my/entri/note?appNumber=' + appnumber
@@ -798,135 +846,11 @@ class Automation_malaysia():
                 json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
                 f.write('\n],\n')
                 time.sleep(1)
-            return 1    
-
-        # 不加载图片, 提升速度
-        chrome_options = webdriver.ChromeOptions()
-        print(chrome_options)
-        chrome_options.add_argument('blink-settings=imagesEnabled=false')
-        chrome_options.add_argument('--headless')
-        self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=chrome_options)
-        self.driver.maximize_window()
-        self.wait = WebDriverWait(self.driver, 30)
-        try:
-            res, _, _ = self.res, self.res_info, self.res_group
-            
-            # print('打开网站')
-            self.driver.get("https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh")
-
-            self.driver.find_element_by_class_name('ev-opt-2').click()
-
-            password = GLOBAL_DATA[4]
-            print('sleep')
-            try:
-                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
-                time.sleep(1)
-            except:
-                pass
-            # print('点击登录')
-            try:
-                self.driver.find_element_by_class_name('ev-opt-2').click()
-                time.sleep(1)
-            except:
-                pass
-            # print('点击关闭红框')
-            try:
-                time.sleep(1)
-                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
-            except:
-                pass
-            time.sleep(1)
-           
-            
-            # print('输入用户名...')
-            print(self.res[1])
-            self.driver.find_element_by_id("txtEmail").click()
-
-            self.driver.find_element_by_id("txtEmail").send_keys(self.res[1])
-            try:
-                self.driver.switch_to_alert().accept()
-            except:
-                pass
-            # print('输入密码...')
-            self.driver.find_element_by_id('txtPassword').click()
-
-            self.driver.find_element_by_id('txtPassword').send_keys(password)
-
-            # element = self.driver.find_element_by_xpath('//div[@class="col-sm-4"]/img')
-            # img_url = self.driver.find_element_by_xpath('//div[@class = "form-group"]/div/img').get_attribute("src")
-            # print(img_url)
-            element = self.driver.find_element_by_xpath('//*[@id="txtQuestion"]')
-            s = element.text.split(' ')
-            a = int(s[0])
-            b = int(s[2])
-            ys = {
-                '+': a + b,
-                '-': a - b,
-                'X': a * b,
-            }
-            result = str(ys[s[1]])
-            print(result)
-            self.driver.find_element_by_id("answer").click()
-            self.driver.find_element_by_id("answer").send_keys(result)
-            time.sleep(2)
-            # 点击登录
-            self.driver.find_element_by_id("btnSubmit").click()
-            time.sleep(5)
-            print('at lz_overlay_eyecatcher_close')
-            for _ in range(5): 
-                try:
-                    self.driver.find_element_by_id("lz_overlay_eyecatcher_close").click()
-                    break
-                except:
-                    time.sleep(5)
-            else:
-                assert self.driver.find_element_by_id("lz_overlay_eyecatcher_close").click()
-            time.sleep(3)
-            # 点击加入免签计划
-            print('点击加入免签计划')
-            self.driver.find_element_by_xpath(
-                '//div[@class = "col-lg-4 col-md-4 text-right"]/div[@class = "avenir"]/button').click()
-            time.sleep(2)
-            # 点击前往按钮
-            print('点击前往按钮')
-            self.driver.find_element_by_id("confirmNotice").click()
-            time.sleep(2)
-
-            if '打印' in self.driver.page_source:
-                appnumber = self.driver.find_element_by_xpath('//*[@id="historyServ"]/div[2]/div/div/table/tbody/tr/td[3]/div/a').text
-                print(appnumber)
-                visa_url = 'https://www.windowmalaysia.my/entri/note?appNumber=' + appnumber
-                pay_url = 'https://www.windowmalaysia.my/entri/jasperpayment?appNumber=' + appnumber
-                visa_data = {"email": self.email, "evisa": visa_url, "receipt": pay_url}
-                self.req.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
-                print('提取完成')
-                with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
-                    json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
-                    f.write('\n],\n')
-                    time.sleep(100)
-                return 1
-
-            appnumber = self.driver.find_element_by_xpath('//*[@id="historyServ"]/div[2]/div/div/table/tbody/tr/td[3]/div/a').text
-            print(appnumber)
-            visa_url = 'https://www.windowmalaysia.my/entri/note?appNumber=' + appnumber
-            pay_url = 'https://www.windowmalaysia.my/entri/jasperpayment?appNumber=' + appnumber
-            visa_data = {"email": self.email, "evisa": visa_url, "receipt": pay_url}
+            return 1  
+        else:
+            visa_data = {"email": self.email}
             self.req.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
-            with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
-                json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
-                f.write('\n],\n')
-            print(visa_data)
-            print('提取完成')
-            
-        except Exception as e:
-            print('= = = = = = = =')
-            print(e)
-            print('= = = = = = = =')
-        finally:
-            try:
-                self.driver.quit()
-            except:
-                pass
+
 
     # 验证码
     def get_answer(self, res):
@@ -1034,35 +958,175 @@ class Automation_malaysia():
             with open(os.path.join(os.getcwd(), r"visa_photo\other.pdf"), 'wb')as f:
                 f.write(rsp_pdf.content)
 
+class Base():
+    '''
+    邮箱激活: email_163()
+    申请签证: login()
+    电子签证获取: get_visa()
+    '''
+    def __init__(self, NO_WINDOW=True, _res='', _res_info='', _res_gruop=''):     # True 无窗口模式;  False 有窗口模式
+        self.url = 'https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh'
+        
+        self.res = _res
+        self.res_info = _res_info
+        self.res_group = _res_gruop
+        
+        self.chrome_options = webdriver.ChromeOptions()
+        # 指定浏览器分辨率
+        self.chrome_options.add_argument('window-size=1920x3000')
+        # 谷歌文档提到需要加上这个属性来规避bug
+        self.chrome_options.add_argument('--disable-gpu')
+        # 隐藏滚动条, 应对一些特殊页面
+        self.chrome_options.add_argument('--hide-scrollbars')
+        # 不加载图片, 提升速度
+        # chrome_options.add_argument('blink-settings=imagesEnabled=false')
+        # 使用代理
+        # self.chrome_options.add_argument('--proxy-server=http://115.221.113.68:38933')
+        # 浏览器不提供可视化页面. linux下如果系统不支持可视化不加这条会启动失败
+        no_windows = NO_WINDOW
+        if no_windows:
+            self.chrome_options.add_argument('--headless')
+        # 手动指定使用的浏览器位置
+        # chrome_options.binary_location = r"C:\Users\tianheguoyun\AppData\Local\Google\Chrome SxS\Application\chrome"
+
+        self.path = sys.path[0] + '\\'
+        webdriver.ChromeOptions
+        
+    # 获取电子签模块
+    def get_visa(self):
+        # 不加载图片, 提升速度
+        chrome_options = self.chrome_options
+        print(chrome_options)
+        chrome_options.add_argument('blink-settings=imagesEnabled=false')
+        chrome_options.add_argument('--headless')
+        self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=chrome_options)
+        self.driver.maximize_window()
+        self.wait = WebDriverWait(self.driver, 30)
+        try:
+            res, sql_geren, sql_gongg = self.res, self.res_info, self.res_group
+            
+            print('打开网站')
+            self.driver.get("https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh")
+            # num = self.driver.window_handles
+            # 获取当前页句柄
+            # self.driver.switch_to_window(num[1])
+
+            self.driver.find_element_by_class_name('ev-opt-2').click()
+
+            time.sleep(3)
+
+            password = GLOBAL_DATA[4]
+            print('sleep')
+            try:
+                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
+                time.sleep(1)
+            except:
+                pass
+            print('点击登录')
+            try:
+                self.driver.find_element_by_class_name('ev-opt-2').click()
+                time.sleep(1)
+            except:
+                pass
+            print('点击关闭红框')
+            try:
+                time.sleep(1)
+                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
+                time.sleep(1)
+            except:
+                pass
+            time.sleep(1)
+           
+            
+            print('输入用户名...')
+            print(self.res[1])
+            self.driver.find_element_by_id("txtEmail").click()
+
+            self.driver.find_element_by_id("txtEmail").send_keys(self.res[1])
+            time.sleep(0.5)
+            try:
+                self.driver.switch_to_alert().accept()
+            except:
+                pass
+            time.sleep(0.5)
+            print('输入密码...')
+            self.driver.find_element_by_id('txtPassword').click()
+
+            self.driver.find_element_by_id('txtPassword').send_keys(password)
+            time.sleep(0.5)
+
+            # element = self.driver.find_element_by_xpath('//div[@class="col-sm-4"]/img')
+            # img_url = self.driver.find_element_by_xpath('//div[@class = "form-group"]/div/img').get_attribute("src")
+            # print(img_url)
+            element = self.driver.find_element_by_xpath('//*[@id="txtQuestion"]')
+            s = element.text.split(' ')
+            a = int(s[0])
+            b = int(s[2])
+            ys = {
+                '+': a + b,
+                '-': a - b,
+                'X': a * b,
+            }
+            result = str(ys[s[1]])
+            print(result)
+            self.driver.find_element_by_id("answer").click()
+            self.driver.find_element_by_id("answer").send_keys(result)
+            time.sleep(2)
+            # 点击登录
+            print('点击登录')
+            self.driver.find_element_by_id("btnSubmit").click()
+            time.sleep(5)
+            # if self.driver.title != "Malaysia Electronic Visa Application":
+            #     print("登录失败，即将重新申请")
+            #     # time.sleep(3)
+            #     return
+
+            if int(sql_gongg[0][7]) <= 15:
+                for i in range(5): 
+                    try:
+                        self.driver.find_element_by_id("lz_overlay_eyecatcher_close").click()
+                        break
+                    except:
+                        time.sleep(5)
+                else:
+                    assert self.driver.find_element_by_id("lz_overlay_eyecatcher_close").click()
+                time.sleep(3)
+                # 点击加入免签计划
+                print('点击加入免签计划')
+                self.driver.find_element_by_xpath(
+                    '//div[@class = "col-lg-4 col-md-4 text-right"]/div[@class = "avenir"]/button').click()
+                time.sleep(2)
+                # 点击前往按钮
+                print('点击前往按钮')
+                self.driver.find_element_by_id("confirmNotice").click()
+                time.sleep(2)
+                appnumber = self.driver.find_element_by_xpath('//*[@id="historyServ"]/div[2]/div/div/table/tbody/tr/td[3]/div/a').text
+                print(appnumber)
+                visa_url = 'https://www.windowmalaysia.my/entri/note?appNumber=' + appnumber
+                pay_url = 'https://www.windowmalaysia.my/entri/jasperpayment?appNumber=' + appnumber
+                visa_data = {"email": sql_geren[0][38], "evisa": visa_url, "receipt": pay_url}
+                requests.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
+                with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+                    json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
+                    f.write('\n],\n')
+                print(visa_data)
+                print('激活完成')
+                self.driver.quit()
+        except:
+            print('= = = = = = = =')
+            self.driver.quit()
+
+    @staticmethod 
+    def data_i(d):
+        if type(d) is int:
+            return str(d)
+        return str(int(d))
 
 
 class Pipe():
     def __init__(self):
         self.con = POOL.connection()
         self.cur = self.con.cursor()
-
-    def data(self):
-        print("\n正在查询需要操作的用户...\n")
-        # 官网未审批数据-加急
-        sql = 'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where type = "4" and urgent = 1'
-        self.cur.execute(sql)
-        res = self.cur.fetchone()
-        # 第一次提交用户
-        sql = 'select username, email_no, reg_status, act_status, gid from dc_business_email where type = 1 and (reg_status = 0 or reg_status = 2)'
-        self.cur.execute(sql)
-        res = self.cur.fetchone()
-        # print(res)
-        if not res:
-            sql = 'select username, email_no, reg_status, act_status, gid from dc_business_email where type = 2 and (reg_status = 0 or act_status = 0)'
-            self.cur.execute(sql)
-            res = self.cur.fetchone()
-            if not res:
-                print('no data time sleep 30s')
-                return 0, 0
-        sql_reg = 'select * from dc_business_malaysia_visa where group_id =' + str(res[4])
-        self.cur.execute(sql_reg)
-        res_gr = self.cur.fetchone()
-        return (res, res_gr)
 
     # 查询
     def select_info(self):
@@ -1089,7 +1153,7 @@ class Pipe():
                     sql_geren = self.cur.fetchall()
                     # print('%%%%', sql_geren)
                     return res, sql_geren, sql_gongg
-            print('\n未查询到数据...等待30s重新查询...\n')
+            print('\n未查询到数据...等待5s重新查询...\n')
             return 0, 0, 0
         except:
             return 0, 0, 0
@@ -1106,7 +1170,7 @@ def main():
         
         print(res)
         if not res:
-            time.sleep(30)
+            time.sleep(5)
             continue
 
         r = Automation_malaysia(res, res_info, res_group)
@@ -1130,10 +1194,13 @@ def main():
                 time.sleep(2)
                 continue
             # 获取签证
-            if (not res[6] or res[6] is 2) and res[5] is 1:
+            if not res[6] and res[5] is 1:
                 print('in visa')
                 r.get_visa()
                 time.sleep(2)
+            elif res[6] is 2:
+                b = Base(False, res, res_info, res_group)
+                b.get_visa()
 
         except Exception as e:
             print(e)
