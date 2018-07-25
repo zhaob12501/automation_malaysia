@@ -266,17 +266,20 @@ class Automation_malaysia():
                 # 点击收件箱
                 # print('点击垃圾邮箱')
                 try:
-                    self.driver.find_element_by_id('_mail_component_109_109').click()
+                    self.driver.find_element_by_xpath('//li[@class="js-component-tree nui-tree-item nui-tree-item-isFold"]/div[@class="js-component-component nui-tree-item-label"]').click()
+                    # time.sleep(10)
+                    # self.driver.find_element_by_id('_mail_component_109_109').click()
                     print('点击其他文件夹')
                     time.sleep(2)
                     tree = self.driver.find_elements_by_xpath('//div[@class="js-component-component nui-tree-item-label"]')
                     print(f'tree 有 {len(tree)} 个')
                     for i in range(len(tree)):
                         if '垃圾' in tree[i].text:
-                            print('点击垃圾箱')
+                            # print('点击垃圾箱')
                             print(i, tree[i].text)
                             tree[i].click()
                             print('√')
+                            break
                 except Exception as e:
                     print(e)
                     time.sleep(20)
@@ -285,11 +288,24 @@ class Automation_malaysia():
                     # self.driver.find_element_by_xpath('//li[@id="_mail_component_72_72"]/span[@class="oz0"]').click()
                     # self.driver.find_element_by_xpath(
                     #     '//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
+            
             try:
                 # self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
                 time.sleep(2)
+                print('点击第一封邮件')
+                dps = self.driver.find_elements_by_class_name('dP0')
+                for i in range(len(dps)):
+                    if 'VisaMalaysia' in dps[i].text:
+                        dps[i].click()
+                        break
+
+                # time.sleep(1000)
+
+
+
+
                 # 点击未读邮件的第一封邮件
-                self.driver.find_element_by_xpath('//div[@class = "nl0 hA0 ck0"]/div[@class = "gB0"]/div[2]').click()
+                # self.driver.find_element_by_xpath('//div[@class = "nl0 hA0 ck0"]/div[@class = "gB0"]').click()
                 print('点击第一封邮件')
                 time.sleep(2)
                 f2 = self.driver.find_element_by_class_name("oD0")
@@ -306,7 +322,9 @@ class Automation_malaysia():
                 act_data = {"email":  self.email, "status": "3"}
                 requests.post(act_url, data=act_data)
                 time.sleep(3)
-            except:
+            except Exception as e:
+                print(e)
+                time.sleep(10)
                 url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
                 data_02 = {"email":  self.email, "status": "4"}
                 requests.post(url_02, data_02)
@@ -533,10 +551,12 @@ class Automation_malaysia():
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
                 data = {"email": self.email, "status": "2"}
                 requests.post(url, data)
+                
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
-                data_photo = {"email": self.email, "text": "照片不合格"}
+                data_photo = {"email": self.res[1], "text": "照片不合格"}
+                print('123s')
                 print(data_photo)
-                _res = requests.post(url, data_photo)
+                requests.post(url, data_photo)
                 return -1
             else:
                 print('照片通过')
@@ -756,7 +776,7 @@ class Automation_malaysia():
                             url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
                             data = {"email": self.res[1], "status": "1"}
                             REQ.post(url, data)
-                            time.sleep(20)
+                            time.sleep(25)
                             return 1
                         else:
                             self.driver.find_element_by_xpath('//*[@id="J_GoBack_nobodyknows"]').click()
@@ -846,11 +866,11 @@ class Automation_malaysia():
                 json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
                 f.write('\n],\n')
                 time.sleep(1)
-            return 1  
+            return 0
         else:
             visa_data = {"email": self.email}
             self.req.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
-
+            return 1 
 
     # 验证码
     def get_answer(self, res):
@@ -958,170 +978,6 @@ class Automation_malaysia():
             with open(os.path.join(os.getcwd(), r"visa_photo\other.pdf"), 'wb')as f:
                 f.write(rsp_pdf.content)
 
-class Base():
-    '''
-    邮箱激活: email_163()
-    申请签证: login()
-    电子签证获取: get_visa()
-    '''
-    def __init__(self, NO_WINDOW=True, _res='', _res_info='', _res_gruop=''):     # True 无窗口模式;  False 有窗口模式
-        self.url = 'https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh'
-        
-        self.res = _res
-        self.res_info = _res_info
-        self.res_group = _res_gruop
-        
-        self.chrome_options = webdriver.ChromeOptions()
-        # 指定浏览器分辨率
-        self.chrome_options.add_argument('window-size=1920x3000')
-        # 谷歌文档提到需要加上这个属性来规避bug
-        self.chrome_options.add_argument('--disable-gpu')
-        # 隐藏滚动条, 应对一些特殊页面
-        self.chrome_options.add_argument('--hide-scrollbars')
-        # 不加载图片, 提升速度
-        # chrome_options.add_argument('blink-settings=imagesEnabled=false')
-        # 使用代理
-        # self.chrome_options.add_argument('--proxy-server=http://115.221.113.68:38933')
-        # 浏览器不提供可视化页面. linux下如果系统不支持可视化不加这条会启动失败
-        no_windows = NO_WINDOW
-        if no_windows:
-            self.chrome_options.add_argument('--headless')
-        # 手动指定使用的浏览器位置
-        # chrome_options.binary_location = r"C:\Users\tianheguoyun\AppData\Local\Google\Chrome SxS\Application\chrome"
-
-        self.path = sys.path[0] + '\\'
-        webdriver.ChromeOptions
-        
-    # 获取电子签模块
-    def get_visa(self):
-        # 不加载图片, 提升速度
-        chrome_options = self.chrome_options
-        print(chrome_options)
-        chrome_options.add_argument('blink-settings=imagesEnabled=false')
-        chrome_options.add_argument('--headless')
-        self.driver = webdriver.Chrome(executable_path=self.path + 'chromedriver', chrome_options=chrome_options)
-        self.driver.maximize_window()
-        self.wait = WebDriverWait(self.driver, 30)
-        try:
-            res, sql_geren, sql_gongg = self.res, self.res_info, self.res_group
-            
-            print('打开网站')
-            self.driver.get("https://www.windowmalaysia.my/evisa/evisa.jsp?alreadyCheckLang=1&lang=zh")
-            # num = self.driver.window_handles
-            # 获取当前页句柄
-            # self.driver.switch_to_window(num[1])
-
-            self.driver.find_element_by_class_name('ev-opt-2').click()
-
-            time.sleep(3)
-
-            password = GLOBAL_DATA[4]
-            print('sleep')
-            try:
-                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
-                time.sleep(1)
-            except:
-                pass
-            print('点击登录')
-            try:
-                self.driver.find_element_by_class_name('ev-opt-2').click()
-                time.sleep(1)
-            except:
-                pass
-            print('点击关闭红框')
-            try:
-                time.sleep(1)
-                self.driver.find_element_by_id('lz_overlay_eyecatcher_close').click()
-                time.sleep(1)
-            except:
-                pass
-            time.sleep(1)
-           
-            
-            print('输入用户名...')
-            print(self.res[1])
-            self.driver.find_element_by_id("txtEmail").click()
-
-            self.driver.find_element_by_id("txtEmail").send_keys(self.res[1])
-            time.sleep(0.5)
-            try:
-                self.driver.switch_to_alert().accept()
-            except:
-                pass
-            time.sleep(0.5)
-            print('输入密码...')
-            self.driver.find_element_by_id('txtPassword').click()
-
-            self.driver.find_element_by_id('txtPassword').send_keys(password)
-            time.sleep(0.5)
-
-            # element = self.driver.find_element_by_xpath('//div[@class="col-sm-4"]/img')
-            # img_url = self.driver.find_element_by_xpath('//div[@class = "form-group"]/div/img').get_attribute("src")
-            # print(img_url)
-            element = self.driver.find_element_by_xpath('//*[@id="txtQuestion"]')
-            s = element.text.split(' ')
-            a = int(s[0])
-            b = int(s[2])
-            ys = {
-                '+': a + b,
-                '-': a - b,
-                'X': a * b,
-            }
-            result = str(ys[s[1]])
-            print(result)
-            self.driver.find_element_by_id("answer").click()
-            self.driver.find_element_by_id("answer").send_keys(result)
-            time.sleep(2)
-            # 点击登录
-            print('点击登录')
-            self.driver.find_element_by_id("btnSubmit").click()
-            time.sleep(5)
-            # if self.driver.title != "Malaysia Electronic Visa Application":
-            #     print("登录失败，即将重新申请")
-            #     # time.sleep(3)
-            #     return
-
-            if int(sql_gongg[0][7]) <= 15:
-                for i in range(5): 
-                    try:
-                        self.driver.find_element_by_id("lz_overlay_eyecatcher_close").click()
-                        break
-                    except:
-                        time.sleep(5)
-                else:
-                    assert self.driver.find_element_by_id("lz_overlay_eyecatcher_close").click()
-                time.sleep(3)
-                # 点击加入免签计划
-                print('点击加入免签计划')
-                self.driver.find_element_by_xpath(
-                    '//div[@class = "col-lg-4 col-md-4 text-right"]/div[@class = "avenir"]/button').click()
-                time.sleep(2)
-                # 点击前往按钮
-                print('点击前往按钮')
-                self.driver.find_element_by_id("confirmNotice").click()
-                time.sleep(2)
-                appnumber = self.driver.find_element_by_xpath('//*[@id="historyServ"]/div[2]/div/div/table/tbody/tr/td[3]/div/a').text
-                print(appnumber)
-                visa_url = 'https://www.windowmalaysia.my/entri/note?appNumber=' + appnumber
-                pay_url = 'https://www.windowmalaysia.my/entri/jasperpayment?appNumber=' + appnumber
-                visa_data = {"email": sql_geren[0][38], "evisa": visa_url, "receipt": pay_url}
-                requests.post("http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
-                with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
-                    json.dump(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{self.res}, 电子签获取成功!", f)
-                    f.write('\n],\n')
-                print(visa_data)
-                print('激活完成')
-                self.driver.quit()
-        except:
-            print('= = = = = = = =')
-            self.driver.quit()
-
-    @staticmethod 
-    def data_i(d):
-        if type(d) is int:
-            return str(d)
-        return str(int(d))
-
 
 class Pipe():
     def __init__(self):
@@ -1194,13 +1050,11 @@ def main():
                 time.sleep(2)
                 continue
             # 获取签证
-            if not res[6] and res[5] is 1:
+            if (not res[6] or res[6] is 2) and res[5] is 1:
                 print('in visa')
                 r.get_visa()
                 time.sleep(2)
-            elif res[6] is 2:
-                b = Base(False, res, res_info, res_group)
-                b.get_visa()
+                
 
         except Exception as e:
             print(e)
