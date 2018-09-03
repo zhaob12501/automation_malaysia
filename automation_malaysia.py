@@ -48,8 +48,8 @@ class Automation_malaysia():
         self.res = res
         self.email = res[1]
         self.password = res[2]
-        self.res_info = res_info[0]
-        self.res_group = res_group[0]
+        self.res_info = res_info
+        self.res_group = res_group
         print(self.email)
         self.req = requests.Session()
 
@@ -707,13 +707,13 @@ class Automation_malaysia():
                 "passportphoto": ("hz.png", open('visa_photo\\hz.png', 'rb'), 'image/png'),
                 "passportphotoLast": ("hz.png", open('visa_photo\\hz.png', 'rb'), 'image/png'),
                 "itenaryDoc": ("hb.png", open('visa_photo\\hb.png', 'rb'), 'image/png'),
-                "bookingDoc": ("jd.pdf", open('visa_photo\\jd.pdf', 'rb'), 'application/pdf'),
+                "bookingDoc": (None, ""),
                 "otherDoc": (None, ""),
                 "invitationDoc": (None, ""),
                 "inventorDoc": (None, ""),
                 "invitationDocName": (None, ""),
                 "itenaryDocName": (None, r"C:\fakepath\hb.png"),
-                "bookingDocName": (None, r"C:\fakepath\jd.pdf"),
+                "bookingDocName": (None, ""),
                 "otherDocName": (None, ""),
                 "photoFileName": (None, r"C:\fakepath\photo.png"),
                 "passportFileName": (None, r"C:\fakepath\hz.png"),
@@ -768,13 +768,14 @@ class Automation_malaysia():
             }
 
             if self.res_info[45]:
-                ty, tm, td = time.strftime("%Y-%m-%d")
-                if int(ty) - int(dobY) <= 16 and int(tm) <= int(dobM) and int(td) <= int(dobD):
-                    files["underageDoc"] = ("other.pdf", open("visa_photo/other.pdf", "rb"), "application/pdf")
-                    files["underageDocName"] = (None, r"C:\fakepath\other.pdf")
-                else:
-                    files["otherDoc"] = ("other.pdf", open("visa_photo/other.pdf", "rb"), "application/pdf")
-                    files["otherDocName"] = (None, r"C:\fakepath\other.pdf")
+                files["otherDoc"] = ("other.pdf", open("visa_photo/other.pdf", "rb"), "application/pdf")
+                files["otherDocName"] = (None, r"C:\fakepath\other.pdf")
+            if self.res_info[47]:
+                files["underageDoc"] = ("other.pdf", open("visa_photo/other.pdf", "rb"), "application/pdf")
+                files["underageDocName"] = (None, r"C:\fakepath\other.pdf")
+            if self.res_group[44]:
+                files["bookingDoc"] = ("jd.pdf", open('visa_photo\\jd.pdf', 'rb'), 'application/pdf')
+                files["bookingDocName"] = (None, r"C:\fakepath\jd.pdf")
 
             url = "https://www.windowmalaysia.my:443/evisa/applications"
             # res = self.req.post(url, data=data, files=file)
@@ -1324,8 +1325,8 @@ class Pipe():
             for n1, n2 in [(1, 1), (1, 0), (2, 1), (2, 0)]:
                 # print(n1, n2)
                 # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 1562'
-                # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 1653'
-                sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type from dc_business_email where type = {n1} and urgent = {n2}'
+                sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 1653'
+                # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type from dc_business_email where type = {n1} and urgent = {n2}'
                 self.cur.execute(sql)
                 res = self.cur.fetchone()
                 # print(1, res)
@@ -1337,11 +1338,11 @@ class Pipe():
                         continue
                     sql_gongg = 'select * from dc_business_malaysia_group where tids =' + str(res[7])
                     self.cur.execute(sql_gongg)
-                    sql_gongg = self.cur.fetchall()
+                    sql_gongg = self.cur.fetchone()
                     # print('###', sql_gongg)
                     sql_reg = 'select * from dc_business_malaysia_visa where group_id =' + str(res[7])
                     self.cur.execute(sql_reg)
-                    sql_geren = self.cur.fetchall()
+                    sql_geren = self.cur.fetchone()
                     if sql_geren and sql_gongg:
                         return res, sql_geren, sql_gongg
                     else:
@@ -1367,6 +1368,12 @@ def main():
             res, res_info, res_group = p.select_info()
             
             print(res)
+            for i in range(48):
+                if i < 46:
+                    print(i, res_info[i], res_group[i], sep=" | ")
+                else:
+                    print(i, res_info[i], sep=" | ")
+            exit()
             if not (res and res_info and res_group):
                 time.sleep(5)
                 continue
@@ -1386,7 +1393,7 @@ def main():
                     r.email_163(res[4])
                     time.sleep(2)
                     continue
-                if "eNTRI" in res_group[0][9]:
+                if "eNTRI" in res_group[9]:
                     print('\n--- 15天 ----\n')
                     # 邮箱登录
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
@@ -1404,7 +1411,7 @@ def main():
                     if res[8] is 2 and res[6] is 2:
                         print('\n==============\n开始获取电子签\n==============')
                         r.get_visa()
-                elif "eVISA" in res_group[0][9]:
+                elif "eVISA" in res_group[9]:
                     print('\n--- 30天 ----\n')
                     # 邮箱登录
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
