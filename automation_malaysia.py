@@ -22,7 +22,7 @@ from DBUtils.PooledDB import PooledDB
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
-
+from email163 import Email
 
 with open('settings.json', 'r') as f:
     GLOBAL_DATA = json.load(f)
@@ -48,8 +48,8 @@ class Automation_malaysia():
         self.res = res
         self.email = res[1]
         self.password = res[2]
-        self.res_info = res_info
-        self.res_group = res_group
+        self.res_info = res_info[0]
+        self.res_group = res_group[0]
         print(self.email)
         self.req = requests.Session()
 
@@ -172,198 +172,7 @@ class Automation_malaysia():
         # print(data)
         return data
 
-    # 邮箱激活
-    def email_163(self, no_win=None):
-        M = PyMouse()
-        try:
-            chrome_options =  webdriver.ChromeOptions()
-            if not no_win:
-                print('no window')
-                chrome_options.add_argument('blink-settings=imagesEnabled=false')
-                chrome_options.add_argument('--headless')
-            # chrome_options.add_argument('window-size=1920x3000')
-            path = sys.path[0] + '\\'
-            self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=chrome_options)
-            # self.driver.implicitly_wait(30)
-            self.wait = WebDriverWait(self.driver, 20)
-            self.driver.maximize_window()
-            print('163邮箱账号框的选择和输入')
-            self.driver.get("http://mail.163.com") #/index_alternate.htm")
-            # self.driver.delete_all_cookies()
-            # try:
-            #     self.wait.until(EC.presence_of_element_located(("xpath", '//*[@id="normalLoginFormMask"]/p/a')))
-            #     self.driver.find_element_by_xpath('//*[@id="normalLoginFormMask"]/p/a').click()
-            # except:
-            #     pass
-            # 163邮箱账号框的选择和输入
-            # time.sleep(200)
-            self.wait.until(EC.presence_of_element_located(('id', 'x-URS-iframe')))
-            f1 = self.driver.find_element_by_id("x-URS-iframe")
-            self.driver.switch_to.frame(f1)
-            self.driver.find_element_by_xpath('//div[@id = "account-box"]/div[2]/input').send_keys(
-                self.res[1])  # "suxun941103"
-            self.driver.find_element_by_xpath('//form[@id ="login-form"]/div/div[3]/div[2]/input[2]').send_keys(
-                self.res[2])  # "739489696"
-
-            # self.wait.until(EC.presence_of_element_located(('id', 'idInputLine')))
-            # self.driver.find_element_by_id('idPlaceholder').send_keys(self.res[1])
-
-            # self.wait.until(EC.presence_of_element_located(('id', 'pwdInput')))
-            # self.driver.find_element_by_id('pwdInput').send_keys(self.res[2])
-            
-            time.sleep(2)
-
-            try:
-                self.driver.find_element_by_id("dologin").click()
-            except:
-                pass
-            time.sleep(1)
-            txt = '网易邮箱'
-            title = self.driver.title
-            try:
-                self.driver.find_element_by_xpath('//a[@class="u-btn u-btn-middle3 f-ib bgcolor f-fl"]').click()
-                print('-----------------------------')
-            except:
-                if txt not in title:
-                    try:
-                        self.driver.save_screenshot('code_yunsu.png')
-                    except:
-                        self.driver.save_screenshot('code_yunsu.png')
-
-                    print('= = ' * 20)
-                    crop_img = (685, 500, 1000, 650)
-                    w = 685
-                    h = 500
-                    im = Image.open("code_yunsu.png")
-                    # 图片的宽度和高度
-                    print("正在识别验证码...")
-
-                    region = im.crop(crop_img)
-                    region.save("code_yunsu.png")
-                    result = upload(6903, 90)
-                    yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
-                    data = {'type': '3', 'num': '40'}
-                    requests.post(yunsu_url, data=data)
-                    print(result)
-                    if type(result) is list and not no_win:
-                        url_02 = 'http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus'
-                        # url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                        data_02 = {"email": self.email, "status": "4"}
-                        requests.post(url_02, data_02)
-                        return
-                    for i in result:
-                        w_m = w + int(i.split(',')[0])
-                        h_m = h + 90 + int(i.split(',')[1]) + 20
-                        print(i, w_m, h_m)
-                        M.click(w_m, h_m)
-                        w_m = h_m = 0
-                        time.sleep(0.5)
-                    try:
-                        time.sleep(2)
-                        self.driver.find_element_by_id("dologin").click()
-                    except:
-                        pass
-
-            try:
-                time.sleep(1)
-                self.driver.find_element_by_xpath('//a[@class="u-btn u-btn-middle3 f-ib bgcolor f-fl"]').click()
-            except:
-                print('...')
-
-            time.sleep(2)
-
-            try:
-                self.driver.find_element_by_id('_mail_tabitem_3_51text').click()
-            except:
-                self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
-            time.sleep(2) 
-
-            if 'VisaMalaysia' not in self.driver.page_source:
-                # 点击收件箱
-                # print('点击垃圾邮箱')
-                try:
-                    self.driver.find_element_by_xpath('//li[@class="js-component-tree nui-tree-item nui-tree-item-isFold"]/div[@class="js-component-component nui-tree-item-label"]').click()
-                    # time.sleep(10)
-                    # self.driver.find_element_by_id('_mail_component_109_109').click()
-                    print('点击其他文件夹')
-                    time.sleep(2)
-                    tree = self.driver.find_elements_by_xpath('//div[@class="js-component-component nui-tree-item-label"]')
-                    print(f'tree 有 {len(tree)} 个')
-                    for i in range(len(tree)):
-                        if '垃圾' in tree[i].text:
-                            # print('点击垃圾箱')
-                            print(i, tree[i].text)
-                            tree[i].click()
-                            print('√')
-                            break
-                except Exception as e:
-                    print(e)
-                    time.sleep(10)
-                    url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                    data_02 = {"email":  self.email, "status": "4"}
-                    requests.post(url_02, data_02)
-                    print('=' * 30)
-
-                    # self.driver.find_element_by_xpath('//li[@id="_mail_component_72_72"]/span[@class="oz0"]').click()
-                    # self.driver.find_element_by_xpath(
-                    #     '//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
-            
-            try:
-                # self.driver.find_element_by_xpath('//li[@class = "js-component-component gWel-mailInfo-item gWel-mailInfo-unread"]/div[2]').click()
-                time.sleep(2)
-                print('点击第一封邮件')
-                dps = self.driver.find_elements_by_class_name('dP0')
-                for i in range(len(dps)):
-                    if 'VisaMalaysia' in dps[i].text:
-                        dps[i].click()
-                        break
-
-                # time.sleep(1000)
-
-
-
-                if 'VisaMalaysia' in self.driver.page_source:
-                    # 点击未读邮件的第一封邮件
-                    # self.driver.find_element_by_xpath('//div[@class = "nl0 hA0 ck0"]/div[@class = "gB0"]').click()
-                    print('点击第一封邮件')
-                    time.sleep(2)
-                    f2 = self.driver.find_element_by_class_name("oD0")
-                    time.sleep(3)
-                    self.driver.switch_to.frame(f2)
-                    print('获取链接地址')
-                    content = self.driver.find_element_by_xpath('//body/div/div[4]/p[2]/a')
-                    # print(content)
-                    em_url = content.get_attribute('href')
-                    print(em_url)
-                    res = self.req.get(em_url)
-                    print("激活成功")
-                    act_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                    act_data = {"email":  self.email, "status": "3"}
-                    requests.post(act_url, data=act_data)
-                    time.sleep(3)
-                else:
-                    url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                    data_02 = {"email":  self.email, "status": "4"}
-                    requests.post(url_02, data_02)
-            except Exception as e:
-                print(e)
-                time.sleep(10)
-                url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                data_02 = {"email":  self.email, "status": "4"}
-                requests.post(url_02, data_02)
-                    
-        except Exception as e:
-            print(e, '-' * 20, sep='\n')
-            url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-            data_02 = {"email":  self.email, "status": "4"}
-            requests.post(url_02, data_02)
-        finally:
-            try:
-                self.driver.quit()
-            except:
-                pass
-
-    # 登录-填写信息-付款
+        # 登录-填写信息-付款
     def login(self):
         try:
             self.img_url(self.res, self.res_info, self.res_group)
@@ -787,7 +596,8 @@ class Automation_malaysia():
             fmurl = "https://www.windowmalaysia.my/evisa/updatePhoto?%s&dataX={}&dataY={}&dataWidth={}&dataHeight={}&dataRotate=0&idKeyProc=0&isEdit=false&evisaType=1" % (res.url.split("?")[1])
             print(f'进入照片页--原照片')
             # res = self.req.get(murl.format(0, 0, 170, 238))
-            res = self.req.get(fmurl.format(0, 0, 213, 296))
+            # res = self.req.get(fmurl.format(0, 0, 213, 296))
+            res = self.req.get(murl.format(0, 0, 141.84, 200))
             print('发送请求，进行照片判断')
             
             if '系统检测到您的照片不符合规格。它可能是以下之一：' in res.text:
@@ -958,7 +768,6 @@ class Automation_malaysia():
         ret = r'<input type="hidden" name=\'sign_type\' value=\'(.*?)\' />'
         sign_type = re.findall(ret, res.text)[0]
         self.apliay_url = f'https://mapi.alipay.com/gateway.do?subject={subject}&sign={sign}&split_fund_info={split_fund_info}&notify_url={notify_url}&body={body}&product_code={product_code}&out_trade_no={out_trade_no}&partner={partner}&service={service}&rmb_fee={rmb_fee}&return_url={return_url}&currency={currency}&sign_type={sign_type}'
-
 
         # ========================================
         print('打开支付宝， 进行付款...')
@@ -1149,18 +958,20 @@ class Automation_malaysia():
 
     # 照片判断
     def setPhoto(self, res, murl):
+        width = 141.84
+        height = 200
         i = 20
         while i >= -20:
             print(f'进入照片页， 控制1: {i}')
-            url = murl.format(i, i, 213-i, 296-i)
+            url = murl.format(i, i, width-i, height-i*1.41)
             res = self.req.get(url)
             print('发送请求，进行照片判断')
 
             if '系统检测到您的照片不符合规格。它可能是以下之一：' in res.text:
-                if i != 5:
-                    i -= 5
+                if i != 2:
+                    i -= 2
                 else:
-                    i = -5
+                    i = -2
                 continue
             print('照片通过')
             time.sleep(5)
@@ -1169,7 +980,7 @@ class Automation_malaysia():
             i = 2
             while i <= 20:
                 print(f'进入照片页， 控制2: {i}')
-                url = murl.format(i, 0, 213 - i, 296 - i * 2)
+                url = murl.format(i, 0, width - i, height - i * 1.41 * 2)
                 res = self.req.get(url)
                 print('发送请求，进行照片判断')
 
@@ -1183,7 +994,7 @@ class Automation_malaysia():
             i = 24
             while i >= 24:
                 print(f'进入照片页， 控制3: {i}')
-                url = murl.format(0, -i, 213, 296 - i)
+                url = murl.format(0, -i, width, height - i*1.41)
                 res = self.req.get(url)
                 print('发送请求，进行照片判断')
 
@@ -1203,7 +1014,8 @@ class Automation_malaysia():
                 print('123s')
                 print(data_photo)
                 requests.post(url, data_photo)
-                return 1    
+                return 1  
+
         return 0 
 
     # 验证码
@@ -1325,8 +1137,8 @@ class Pipe():
             for n1, n2 in [(1, 1), (1, 0), (2, 1), (2, 0)]:
                 # print(n1, n2)
                 # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 1562'
-                sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 1653'
-                # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type from dc_business_email where type = {n1} and urgent = {n2}'
+                # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid from dc_business_email where id = 1653'
+                sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type from dc_business_email where type = {n1} and urgent = {n2}'
                 self.cur.execute(sql)
                 res = self.cur.fetchone()
                 # print(1, res)
@@ -1338,11 +1150,11 @@ class Pipe():
                         continue
                     sql_gongg = 'select * from dc_business_malaysia_group where tids =' + str(res[7])
                     self.cur.execute(sql_gongg)
-                    sql_gongg = self.cur.fetchone()
+                    sql_gongg = self.cur.fetchall()
                     # print('###', sql_gongg)
                     sql_reg = 'select * from dc_business_malaysia_visa where group_id =' + str(res[7])
                     self.cur.execute(sql_reg)
-                    sql_geren = self.cur.fetchone()
+                    sql_geren = self.cur.fetchall()
                     if sql_geren and sql_gongg:
                         return res, sql_geren, sql_gongg
                     else:
@@ -1368,12 +1180,6 @@ def main():
             res, res_info, res_group = p.select_info()
             
             print(res)
-            for i in range(48):
-                if i < 46:
-                    print(i, res_info[i], res_group[i], sep=" | ")
-                else:
-                    print(i, res_info[i], sep=" | ")
-            exit()
             if not (res and res_info and res_group):
                 time.sleep(5)
                 continue
@@ -1389,11 +1195,14 @@ def main():
                     continue
                 # 邮箱激活
                 if res[3] is 1 and (not res[4] or res[4] is 2):
-                    print('in email')
-                    r.email_163(res[4])
-                    time.sleep(2)
+                    e = Email(res[4])
+                    e.getData(res[1], res[2])
+                    del e
+                    # print('in email')
+                    # r.email_163(res[4])
+                    # time.sleep(2)
                     continue
-                if "eNTRI" in res_group[9]:
+                if "eNTRI" in res_group[0][9]:
                     print('\n--- 15天 ----\n')
                     # 邮箱登录
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
@@ -1411,13 +1220,12 @@ def main():
                     if res[8] is 2 and res[6] is 2:
                         print('\n==============\n开始获取电子签\n==============')
                         r.get_visa()
-                elif "eVISA" in res_group[9]:
+                elif "eVISA" in res_group[0][9]:
                     print('\n--- 30天 ----\n')
                     # 邮箱登录
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
                         print('in login')
                         r.thLogin()
-                        time.sleep(2)
                         continue
                     # 获取签证
                     if not res[6] and res[5] is 1:
