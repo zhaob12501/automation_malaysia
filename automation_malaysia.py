@@ -776,11 +776,11 @@ class Automation_malaysia():
         REQ.timeout = 30
 
         
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument('window-size=1920x3000')
-        path = sys.path[0] + '\\'
-        self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=options)
+        # options = webdriver.ChromeOptions()
+        # options.add_argument('--headless')
+        # options.add_argument('window-size=1920x3000')
+        # path = sys.path[0] + '\\'
+        self.driver = webdriver.PhantomJS("phantomjs")
         self.wait = WebDriverWait(self.driver, 20)
         # self.driver.maximize_window()
         
@@ -1195,7 +1195,7 @@ def main():
                     continue
                 # 邮箱激活
                 if res[3] is 1 and (not res[4] or res[4] is 2):
-                    e = Email(res[4])
+                    e = Email()
                     e.getData(res[1], res[2])
                     del e
                     # print('in email')
