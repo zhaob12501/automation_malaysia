@@ -173,6 +173,7 @@ class Automation_malaysia():
         return data
 
         # 登录-填写信息-付款
+    
     def login(self):
         try:
             self.img_url(self.res, self.res_info, self.res_group)
