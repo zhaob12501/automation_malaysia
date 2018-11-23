@@ -127,11 +127,11 @@ class Automation_malaysia():
 
         # answer = self.get_answer(res)
         url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-        rsp = Captcha(1, self.req.get(url).content)
+        img = self.req.get(url).content
+        with open("code_yunsu.png", 'wb') as f:
+            f.write(img)
+        rsp = Captcha(1, img)
         answer = rsp.pred_rsp.value
-        # with open("code_yunsu.png", 'wb') as f:
-        #     f.write(self.req.get(url).content)
-        # answer = upload(3060)
         ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
         answer = ans if ans else answer
         
@@ -197,10 +197,11 @@ class Automation_malaysia():
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-            rsp = Captcha(1, self.req.get(url).content)
+            img = self.req.get(url).content
+            with open("code_yunsu.png", 'wb') as f:
+                f.write(img)
+            rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
-            # with open("code_yunsu.png", 'wb') as f:
-            #     f.write(self.req.get(url).content)
             # answer = upload(3060)
             ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
             answer = ans if ans else answer
@@ -698,11 +699,11 @@ class Automation_malaysia():
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-            rsp = Captcha(1, self.req.get(url).content)
+            img = self.req.get(url).content
+            with open("code_yunsu.png", 'wb') as f:
+                f.write(img)
+            rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
-            # with open("code_yunsu.png", 'wb') as f:
-            #     f.write(self.req.get(url).content)
-            # answer = upload(3060)
             ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
             answer = ans if ans else answer
 
