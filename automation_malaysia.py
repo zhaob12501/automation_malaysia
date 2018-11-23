@@ -6,26 +6,24 @@ Created on 2018/05/31
 import datetime
 import hashlib
 import json
-import sys
 import os
 import re
+import sys
 import time
+
 import pymysql
 import requests
-from pymysql import connect
-from PIL import Image
-from yunsu import upload
-from pymouse import PyMouse
-from selenium.webdriver.common.keys import Keys
-from selenium import webdriver
 from DBUtils.PooledDB import PooledDB
-from selenium.webdriver.support.ui import Select, WebDriverWait
+from PIL import Image
+from selenium import webdriver
 from selenium.webdriver import ActionChains
-from selenium.webdriver.support import expected_conditions as EC
-from email163 import Email
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
 
-with open('settings.json', 'r') as f:
-    GLOBAL_DATA = json.load(f)
+from email163 import Email
+from fateadm import Captcha
+from settings import GLOBAL_DATA
+from yunsu import upload
 
 POOL = PooledDB(
     pymysql,
@@ -37,6 +35,7 @@ POOL = PooledDB(
     port=3306,
     charset="utf8"
 )
+
 
 class Automation_malaysia():
     '''
@@ -128,10 +127,13 @@ class Automation_malaysia():
 
         # answer = self.get_answer(res)
         url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-        with open("code_yunsu.png", 'wb') as f:
-            f.write(self.req.get(url).content)
+        rsp = Captcha(1, self.req.get(url).content)
+        answer = rsp.pred_rsp.value
+        # with open("code_yunsu.png", 'wb') as f:
+        #     f.write(self.req.get(url).content)
         # answer = upload(3060)
-        answer = input("\n请在此输入验证码：\n")
+        ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
+        answer = ans if ans else answer
         
         reg = r'<input name="session_id" id="session_id" type="hidden" value="(.*?)">'
         da0 = re.findall(reg, res.text)[0]
@@ -195,10 +197,13 @@ class Automation_malaysia():
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-            with open("code_yunsu.png", 'wb') as f:
-                f.write(self.req.get(url).content)
+            rsp = Captcha(1, self.req.get(url).content)
+            answer = rsp.pred_rsp.value
+            # with open("code_yunsu.png", 'wb') as f:
+            #     f.write(self.req.get(url).content)
             # answer = upload(3060)
-            answer = input("\n\n请在此输入验证码：\n")
+            ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
+            answer = ans if ans else answer
             
             url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={answer}&_={int(time.time()*1000)}'
             # print(url)
@@ -693,10 +698,13 @@ class Automation_malaysia():
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-            with open("code_yunsu.png", 'wb') as f:
-                f.write(self.req.get(url).content)
+            rsp = Captcha(1, self.req.get(url).content)
+            answer = rsp.pred_rsp.value
+            # with open("code_yunsu.png", 'wb') as f:
+            #     f.write(self.req.get(url).content)
             # answer = upload(3060)
-            answer = input("\n请在此输入验证码：\n")
+            ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
+            answer = ans if ans else answer
 
             url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={answer}&_={int(time.time()*1000)}'
             # print(url)
@@ -802,7 +810,6 @@ class Automation_malaysia():
         options.add_argument('window-size=1920x3000')
         path = sys.path[0] + '\\'
         self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=options)
-        self.wait = WebDriverWait(self.driver, 20)
         # self.driver.maximize_window()
         
         self.driver.get(self.apliay_url)
@@ -852,6 +859,8 @@ class Automation_malaysia():
                         time.sleep(0.5)
                         # 获取验证码结果
                         result2 = upload(3040)
+                        # rsp = Captcha(2, path="code_yunsu.png", pred_type="30400")
+                        # result2 = rsp.pred_rsp.value
                         yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
                         data = {'type': '3', 'num': '25'}
                         REQ.post(yunsu_url, data=data)
