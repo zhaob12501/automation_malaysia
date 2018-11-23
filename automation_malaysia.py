@@ -126,13 +126,11 @@ class Automation_malaysia():
         print('in get_data')
 
         # answer = self.get_answer(res)
-        if os.path.isfile("code.png"):
-            os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
-        if os.path.isfile("code.png"):
-            os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
-        url = "https://www.windowmalaysia.my/evisa/captchaImaging"  
+        url = "https://www.windowmalaysia.my/evisa/captchaImaging"
         img = self.req.get(url).content
-        with open("code.png", 'wb') as f:
+        with open(f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png", 'wb') as f:
+            f.write(img)
+        with open("code_yunsu.png", 'wb') as f:
             f.write(img)
         rsp = Captcha(1, img)
         answer = rsp.pred_rsp.value
@@ -200,11 +198,11 @@ class Automation_malaysia():
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
-            if os.path.isfile("code.png"):
-                os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
             img = self.req.get(url).content
-            with open("code.png", 'wb') as f:
+            with open(f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png", 'wb') as f:
+                f.write(img)
+            with open("code_yunsu.png", 'wb') as f:
                 f.write(img)
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
@@ -704,11 +702,11 @@ class Automation_malaysia():
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
-            if os.path.isfile("code.png"):
-                os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
             img = self.req.get(url).content
-            with open("code.png", 'wb') as f:
+            with open(f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png", 'wb') as f:
+                f.write(img)
+            with open("code_yunsu.png", 'wb') as f:
                 f.write(img)
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
