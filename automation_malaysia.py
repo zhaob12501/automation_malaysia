@@ -126,9 +126,13 @@ class Automation_malaysia():
         print('in get_data')
 
         # answer = self.get_answer(res)
-        url = "https://www.windowmalaysia.my/evisa/captchaImaging"
+        if os.path.isfile("code.png"):
+            os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
+        if os.path.isfile("code.png"):
+            os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
+        url = "https://www.windowmalaysia.my/evisa/captchaImaging"  
         img = self.req.get(url).content
-        with open("code_yunsu.png", 'wb') as f:
+        with open("code.png", 'wb') as f:
             f.write(img)
         rsp = Captcha(1, img)
         answer = rsp.pred_rsp.value
@@ -196,9 +200,11 @@ class Automation_malaysia():
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
+            if os.path.isfile("code.png"):
+                os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
             img = self.req.get(url).content
-            with open("code_yunsu.png", 'wb') as f:
+            with open("code.png", 'wb') as f:
                 f.write(img)
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
@@ -698,9 +704,11 @@ class Automation_malaysia():
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
+            if os.path.isfile("code.png"):
+                os.rename("code.png", f"visa_photo/captcha/code{time.strftime('%y%d_%H%M%S')}.png")
             url = "https://www.windowmalaysia.my/evisa/captchaImaging"
             img = self.req.get(url).content
-            with open("code_yunsu.png", 'wb') as f:
+            with open("code.png", 'wb') as f:
                 f.write(img)
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
@@ -856,11 +864,11 @@ class Automation_malaysia():
                         # print(captcha_left, captcha_top, captcha_right)
                         img = Image.open('visa_photo/captcha.png')
                         img = img.crop((captcha_left, captcha_top, captcha_right, captcha_bottom))
-                        img.save('code_yunsu.png')
+                        img.save('code.png')
                         time.sleep(0.5)
                         # 获取验证码结果
                         result2 = upload(3040)
-                        # rsp = Captcha(2, path="code_yunsu.png", pred_type="30400")
+                        # rsp = Captcha(2, path="code.png", pred_type="30400")
                         # result2 = rsp.pred_rsp.value
                         yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
                         data = {'type': '3', 'num': '25'}
@@ -890,7 +898,7 @@ class Automation_malaysia():
                         # self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
                         img = Image.open('visa_photo/captcha.png')
                         img = img.crop((captcha_left, captcha_top, captcha_right, captcha_bottom ))
-                        img.save('code_yunsu.png')
+                        img.save('code.png')
                         # 获取验证码结果
                         result2 = upload(3040)
                         yunsu_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/useInterface"
@@ -1272,7 +1280,7 @@ def main():
             # finally:
             #     time.sleep(2)
             #     try:
-            #         os.remove('code_yunsu.png')
+            #         os.remove('code.png')
             #     except:
             #         pass
         except Exception as e:
