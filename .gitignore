@@ -26,3 +26,5 @@ db.ini
 settings.*
 user_pwd
 otherfile
+upload*
+.*

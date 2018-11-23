@@ -89,6 +89,15 @@ class Automation_malaysia():
     def registe(self):
         print('正在注册...')
         res = self.requ(self.registe_url)
+        # 查询邮箱是否使用
+        url = "https://www.windowmalaysia.my/evisa/vlno_ajax_checkUsername.jsp"
+        email_res = self.req.post(url, data={"email": self.email})
+        if email_res.text.strip():
+            print('邮箱已被注册，更换邮箱...')
+            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/replaceEmail"
+            data_p = {"email": self.email}
+            res = requests.post(url, data_p).json()
+
         data = self.get_data(res)
         # print(data)
         re_url = 'https://www.windowmalaysia.my/evisa/register'
@@ -104,11 +113,6 @@ class Automation_malaysia():
                 time.sleep(1)
                 self.req.get(f'https://www.windowmalaysia.my/evisa/resendVerification?email={self.email}')
             return 1
-        elif 'You have entered an invalid email address' in res.text:
-            print('邮箱无效，更换邮箱...')
-            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/replaceEmail"
-            data_p = {"email": self.email}
-            res = requests.post(url, data_p).json()
         print('注册失败!...')
         url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
         data = {"email": self.email, "status": "2"}
@@ -122,8 +126,13 @@ class Automation_malaysia():
     def get_data(self, res):
         print('in get_data')
 
-        answer = self.get_answer(res)
-
+        # answer = self.get_answer(res)
+        url = "https://www.windowmalaysia.my/evisa/captchaImaging"
+        with open("code_yunsu.png", 'wb') as f:
+            f.write(self.req.get(url).content)
+        # answer = upload(3060)
+        answer = input("\n请在此输入验证码：\n")
+        
         reg = r'<input name="session_id" id="session_id" type="hidden" value="(.*?)">'
         da0 = re.findall(reg, res.text)[0]
         # print(da0)
@@ -172,8 +181,7 @@ class Automation_malaysia():
         # print(data)
         return data
 
-        # 登录-填写信息-付款
-    
+    # 登录-填写信息-付款
     def login(self):
         try:
             self.img_url(self.res, self.res_info, self.res_group)
@@ -185,8 +193,14 @@ class Automation_malaysia():
 
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
-            # print(ipaddr)
-            url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={self.get_answer(res)}&_={int(time.time()*1000)}'
+            # answer = self.get_answer(res)
+            url = "https://www.windowmalaysia.my/evisa/captchaImaging"
+            with open("code_yunsu.png", 'wb') as f:
+                f.write(self.req.get(url).content)
+            # answer = upload(3060)
+            answer = input("\n\n请在此输入验证码：\n")
+            
+            url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={answer}&_={int(time.time()*1000)}'
             # print(url)
             res = self.req.get(url)
             # print(self.req.headers)
@@ -195,7 +209,7 @@ class Automation_malaysia():
                 data_02 = {"email":  self.email, "status": "4"}
                 requests.post(url_02, data_02)
                 print("登录失败，重新激活！")
-                return 
+                return 0
             # print(res.status_code)
             assert res.status_code == 200
 
@@ -381,7 +395,7 @@ class Automation_malaysia():
                 return
             elif 'photo_editor' not in res.url:
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
-                data_photo = {"email": self.email, "text": "护照过期", "type": "3"}
+                data_photo = {"email": self.email, "text": "信息有误", "type": "3"}
                 print(data_photo)
                 _res = requests.post(url, data_photo)
                 print(_res.json())
@@ -677,8 +691,14 @@ class Automation_malaysia():
 
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
-            # print(ipaddr)
-            url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={self.get_answer(res)}&_={int(time.time()*1000)}'
+            # answer = self.get_answer(res)
+            url = "https://www.windowmalaysia.my/evisa/captchaImaging"
+            with open("code_yunsu.png", 'wb') as f:
+                f.write(self.req.get(url).content)
+            # answer = upload(3060)
+            answer = input("\n请在此输入验证码：\n")
+
+            url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={answer}&_={int(time.time()*1000)}'
             # print(url)
             res = self.req.get(url)
             # print(self.req.headers)
@@ -777,11 +797,11 @@ class Automation_malaysia():
         REQ.timeout = 30
 
         
-        # options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
-        # options.add_argument('window-size=1920x3000')
-        # path = sys.path[0] + '\\'
-        self.driver = webdriver.PhantomJS("phantomjs")
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('window-size=1920x3000')
+        path = sys.path[0] + '\\'
+        self.driver = webdriver.Chrome(executable_path=path + 'chromedriver', chrome_options=options)
         self.wait = WebDriverWait(self.driver, 20)
         # self.driver.maximize_window()
         
@@ -847,8 +867,8 @@ class Automation_malaysia():
                 time.sleep(2)
                 self.driver.find_element_by_id("J_newBtn").click()
                 time.sleep(2)
-                while True:
-                    if '验证码错误' in self.driver.page_source:
+                for _ in range(10):
+                    if '验证码错误' in self.driver.page_source or '请正确填写' in self.driver.page_source:
                         self.driver.find_element_by_xpath(
                             '//img[@class="checkCodeImg"]').click()
                         time.sleep(1)
@@ -857,7 +877,7 @@ class Automation_malaysia():
                         print('输入密码...')
                         self.driver.find_element_by_id("payPasswd_rsainput").click()
                         time.sleep(1)
-                        self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
+                        # self.driver.find_element_by_id("payPasswd_rsainput").send_keys(GLOBAL_DATA[6])
                         img = Image.open('visa_photo/captcha.png')
                         img = img.crop((captcha_left, captcha_top, captcha_right, captcha_bottom ))
                         img.save('code_yunsu.png')
@@ -881,6 +901,9 @@ class Automation_malaysia():
                         time.sleep(1)
                     else:
                         break
+                else:
+                    print("验证码识别错误")
+                    return 0
             except Exception as e:
                 print(e)
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
@@ -1173,10 +1196,11 @@ class Pipe():
 
 def main():
     while 1:
+        os.system("cls")
         try:
-            print('-' * 50)
-            print(time.strftime('%Y-%m-%d %H:%M:%S'))
-            print('-' * 50)
+            print('-' * 30)
+            print("马来西亚电子签", time.strftime('%Y-%m-%d %H:%M:%S'))
+            print('-' * 30)
             p = Pipe()
             res, res_info, res_group = p.select_info()
             
@@ -1199,9 +1223,6 @@ def main():
                     e = Email()
                     e.getData(res[1], res[2])
                     del e
-                    # print('in email')
-                    # r.email_163(res[4])
-                    # time.sleep(2)
                     continue
                 if "eNTRI" in res_group[0][9]:
                     print('\n--- 15天 ----\n')
@@ -1213,14 +1234,14 @@ def main():
                         continue
                     
                     # 获取签证
-                    if not res[6] and res[5] is 1:
-                        print('in visa')
+                    if (not res[6] or res[6] is 2) and res[5] is 1:
+                        print('\n==============\n开始获取电子签\n==============')
                         r.get_visa()
                         continue
                         
-                    if res[8] is 2 and res[6] is 2:
-                        print('\n==============\n开始获取电子签\n==============')
-                        r.get_visa()
+                    # if res[8] is 2 and res[6] is 2:
+                    #     print('\n==============\n开始获取电子签\n==============')
+                    #     r.get_visa()
                 elif "eVISA" in res_group[0][9]:
                     print('\n--- 30天 ----\n')
                     # 邮箱登录
@@ -1238,12 +1259,12 @@ def main():
             except Exception as e:
                 print('==')
                 print(e)
-            finally:
-                time.sleep(2)
-                try:
-                    os.remove('code_yunsu.png')
-                except:
-                    pass
+            # finally:
+            #     time.sleep(2)
+            #     try:
+            #         os.remove('code_yunsu.png')
+            #     except:
+            #         pass
         except Exception as e:
             with open("error.log", 'a') as f:
                 f.write(repr(e)+'\n')
