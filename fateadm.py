@@ -288,13 +288,11 @@ class FateadmApi():
     # 参数：pred_type:识别类型  img_data:图片的数据
     # 返回值： rsp.pred_rsp.value：识别的结果
     ##
-    def PredictExtend(self,pred_type, img_data, head_info = ""):
-        rsp = self.Predict(pred_type,img_data,head_info)
+    def PredictExtend(self, pred_type, img_data, head_info=""):
+        rsp = self.Predict(pred_type, img_data, head_info)
         return rsp.pred_rsp.value
 
-
-
-def Captcha(operating=1, img_data=None,  path=None, rsp=None, pred_type="30600"):
+def Captcha(operating=1, img_data=None, path=None, rsp=None, pred_type="80300"):
     """ 调用打码API \
     \n参数: operating:
     1 : url 返回识别结果

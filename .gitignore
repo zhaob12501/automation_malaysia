@@ -28,3 +28,7 @@ user_pwd
 otherfile
 upload*
 .*
+.vscode
+visa_photo
+logs
+files

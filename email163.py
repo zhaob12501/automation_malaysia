@@ -1,16 +1,12 @@
 import sys
-from time import sleep, strftime
+from time import sleep
 
 import selenium
-from PIL import Image
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
-from pymouse import PyMouse
-
 import requests
-from yunsu import upload
 
 NC = "noClick"
 
@@ -34,42 +30,12 @@ class Base:
         # self.chrome_options.add_argument('--proxy-server=http://127.0.0.1:1080')
         # 设置浏览器窗口大小
         self.chrome_options.add_argument('window-size=1000x1500')
-        self.driver = webdriver.Chrome(
-            executable_path=self.path + 'chromedriver', chrome_options=self.chrome_options)
+        self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
         # 设置隐性等待时间, timeout = 20
         self.driver.implicitly_wait(10)
         self.driver.maximize_window()
         # 设置显性等待时间, timeout = 10, 间隔 0.3s 检查一次
         self.wait = WebDriverWait(self.driver, 10, 0.3, "请求超时")
-
-    # 获取验证码
-
-    def getCaptcha(self, id=''):
-        """ 验证码识别
-            根据页面验证码元素位置, 截取验证码图片
-            发送验证码识别请求,返回验证码文字
-
-            Returns: result (str)
-        """
-        print("正在识别验证码...")
-        self.Wait(id, NC)
-
-        captcha = self.driver.find_element_by_id(id)
-        self.driver.save_screenshot('captcha.png')
-        captcha_left = captcha.location['x']
-        top = 0 if captcha.location['y'] < 1200 else 910
-        captcha_top = captcha.location['y'] - top
-        captcha_right = captcha.location['x'] + captcha.size['width']
-        captcha_bottom = captcha.location['y'] + captcha.size['height'] - top
-        # print(captcha_left, captcha_top, captcha_right, captcha_bottom)
-        img = Image.open('captcha.png')
-        img = img.crop((captcha_left, captcha_top,
-                        captcha_right, captcha_bottom))
-        img.save('code.png')
-        sleep(0.5)
-        result = upload()
-        print(f"验证码为: {result}")
-        return result
 
     # 检测元素 / 点击 / 发送字符 / 选择下拉框
     def Wait(self, idName=None, text=None, xpath=None, css=None):
@@ -142,6 +108,7 @@ class Base:
 
 class Email(Base):
     def getData(self, email, pwd):
+        pwd = pwd.strip()
         try:
             self.driver.get("http://mail.163.com/index_alternate.htm")
             print("输入用户名")
@@ -166,7 +133,7 @@ class Email(Base):
             if 'VisaMalaysia' not in self.driver.page_source:
                 print("无邮件")
                 url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                data_02 = {"email":  email, "status": "4", "status_if": 1}
+                data_02 = {"email": email, "status": "4", "status_if": 1}
                 requests.post(url_02, data_02)
                 return 0
 
@@ -184,22 +151,16 @@ class Email(Base):
             res = requests.get(em_url)
             print("激活成功")
             act_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-            act_data = {"email":  email, "status": "3"}
+            act_data = {"email": email, "status": "3"}
             requests.post(act_url, data=act_data)
             sleep(3)
             return 1
         except Exception as e:
             print(e, '-' * 20, sep='\n')
             url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-            data_02 = {"email":  email, "status": "4"}
+            data_02 = {"email": email, "status": "4"}
             requests.post(url_02, data_02)
             return 0
-
-
-        
-
-
-
 
 
 if __name__ == '__main__':
