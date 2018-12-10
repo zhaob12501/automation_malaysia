@@ -831,7 +831,7 @@ class Automation_malaysia():
         currency = re.findall(ret, res.text)[0]
         ret = r'<input type="hidden" name=\'sign_type\' value=\'(.*?)\' />'
         sign_type = re.findall(ret, res.text)[0]
-        apliay_url = f'https://mapi.alipay.com/gateway.do?subject={subject}&sign={sign}&split_fund_info={split_fund_info}&'\
+        self.apliay_url = f'https://mapi.alipay.com/gateway.do?subject={subject}&sign={sign}&split_fund_info={split_fund_info}&'\
             f'notify_url={notify_url}&body={body}&product_code={product_code}&out_trade_no={out_trade_no}&partner={partner}&'\
             f'service={service}&rmb_fee={rmb_fee}&return_url={return_url}&currency={currency}&sign_type={sign_type}'
 
@@ -841,17 +841,14 @@ class Automation_malaysia():
         REQ = requests.Session()
         REQ.timeout = 30
 
-        from Base import Base
-        driver = Base()
+        options = webdriver.ChromeOptions()
+        if ali_no_win:
+            options.add_argument('--headless')
+        options.add_argument('window-size=1920x3000')
+        self.driver = webdriver.Chrome(chrome_options=options)
+        self.driver.maximize_window()
 
-        # options = webdriver.ChromeOptions()
-        # if ali_no_win:
-        #     options.add_argument('--headless')
-        # options.add_argument('window-size=1920x3000')
-        # self.driver = webdriver.Chrome(chrome_options=options)
-        # self.driver.maximize_window()
-
-        driver.get(apliay_url)
+        self.driver.get(self.apliay_url)
 
         if st_input:
             a = input("--回车确认付款完成--\n>>>")
@@ -866,9 +863,16 @@ class Automation_malaysia():
                 self.driver.quit()
                 return 1
         try:
-            # 点击账号密码付款
-            print('点击账号密码付款')
-            driver.Wait("J_tip_qr")
+            try:
+                # 点击账号密码付款
+                print('点击账号密码付款')
+                time.sleep(1)
+                self.driver.find_element_by_id("J_tip_qr").click()
+                time.sleep(1)
+
+            except Exception as e:
+                pass
+
             print('准备输入用户名密码！')
             try:
                 print('输入用户名...')
