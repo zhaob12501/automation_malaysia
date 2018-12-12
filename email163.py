@@ -103,7 +103,10 @@ class Base:
         return []
 
     def __del__(self):
-        self.driver.quit()
+        try:
+            self.driver.quit()
+        except Exception:
+            pass
 
 
 class Email(Base):

@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from selenium import webdriver
 from selenium.common.exceptions import InvalidElementStateException as IESE
@@ -65,7 +66,7 @@ class Base:
         self.driver.maximize_window()
 
     # 检测元素 / 点击 / 发送字符 / 选择下拉框
-    def Wait(self, idName=None, text=None, timeout=5, **kwargs):
+    def Wait(self, idName=None, text=None, timeout=5, sleep=0.1, **kwargs):
         """ 设置显性等待, 每 0.3s 检查一次
         Parameter:
             idName  : 选择器规则, 默认idName
@@ -75,7 +76,7 @@ class Base:
                 xpath or css or tag_name or class_name or name
         """
         assert idName or kwargs
-
+        time.sleep(sleep)
         if idName:
             locator = (By.ID, idName)
         elif kwargs.get("xpath"):
@@ -116,7 +117,7 @@ class Base:
     def get_captcha(self, elem=None, pred_type=None):
         img = elem.screenshot_as_png
         rsp = Captcha(img_data=img, pred_type=pred_type)
-        return rsp
+        return rsp.pred_rsp.value
 
     def __del__(self):
         try:
