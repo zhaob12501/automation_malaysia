@@ -45,11 +45,11 @@ class Pipe(object):
                             "redis length:%s" % length
                         )
                         print("\n", insert_info, "\n")
-                        time.sleep(1)
                         self.redis.sadd("malaysia", res[7])
                         with open("logs/insert_info.log", "a") as f:
                             f.write(json.dumps(insert_info) + "\n")
                         task_malaysia.delay(res)
+                        time.sleep(10)
         # print('\n执行任务结束...\n')
         return length
 

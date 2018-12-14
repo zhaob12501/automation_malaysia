@@ -1,3 +1,4 @@
+import os
 import time
 
 import requests
@@ -57,7 +58,7 @@ class Pipe():
 
 def main():
     while 1:
-        # os.system("cls")
+        os.system("cls")
         try:
             print('-' * 30)
             print("马来西亚电子签", time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -136,6 +137,7 @@ def main():
             #     except Exception:
             #         pass
         except Exception as e:
+            print(e)
             with open("logs/error.log", 'a') as f:
                 f.write(repr(e) + '\n')
             time.sleep(5)

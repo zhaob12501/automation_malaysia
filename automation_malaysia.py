@@ -7,16 +7,17 @@ import json
 import re
 import sys
 import time
+from urllib import parse
 from random import random
 
 import requests
+
+from Base import Base
+from fateadm import Captcha
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
-
-from fateadm import Captcha
-from settings import GLOBAL_DATA, NC, redis, pool
-from Base import Base
+from settings import GLOBAL_DATA, NC, pool, redis
 
 # from selenium.webdriver.support.ui import WebDriverWait
 
@@ -28,7 +29,7 @@ alipay_Keys = (
     Keys.NUMPAD8, Keys.NUMPAD8, Keys.NUMPAD8)
 ali_no_win = True
 st_input = False
-redis_time = 10
+redis_time = 30
 
 # 2-支付宝
 # alipay_user = GLOBAL_DATA[9]
@@ -117,7 +118,6 @@ class Automation_malaysia():
             return 0
 
         data, rsp = self.get_data(res)
-        # print(data)
         re_url = 'https://www.windowmalaysia.my/evisa/register'
         res = self.requ(re_url, data=data)
         print('请求发送成功...进入判断...')
@@ -139,13 +139,19 @@ class Automation_malaysia():
         print(rs.json())
         return 0
 
+    def get_img(self):
+        url = "https://www.windowmalaysia.my/evisa/vlno_ajax_getToken.jsp"
+        img_tkn = parse.quote(self.req.post(url).text)
+        url = "https://www.windowmalaysia.my/evisa/captchaImaging?tkn=%s&_=%s" % (img_tkn, int(time.time() * 1000))
+        # answer = self.get_answer(res)
+        # url = "https://www.windowmalaysia.my/evisa/captchaImaging"
+        img = self.req.get(url).content
+        return img
+
     # 获取注册数据
     def get_data(self, res):
         print('in get_data')
-
-        # answer = self.get_answer(res)
-        url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-        img = self.req.get(url).content
+        img = self.get_img()
         rsp = Captcha(1, img)
         answer = rsp.pred_rsp.value
         print("验证码为:", answer)
@@ -212,8 +218,9 @@ class Automation_malaysia():
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
-            url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-            img = self.req.get(url).content
+            # url = "https://www.windowmalaysia.my/evisa/captchaImaging"
+            # img = self.req.get(url).content
+            img = self.get_img()
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
             # answer = upload(3060)
@@ -225,13 +232,17 @@ class Automation_malaysia():
                 f'txtPassword={GLOBAL_DATA[4]}&answer={answer}&_={int(time.time()*1000)}'
             # print(url)
             res = self.req.get(url)
-            # print(self.req.headers)
-            if res.json().get("status") != "success":
+            print()
+            print(res.json().get("status"))
+            print()
+            if res.json().get("status") == "conEstablished":
                 Captcha(4, rsp=rsp)
                 url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
                 data_02 = {"email": self.email, "status": "4"}
                 requests.post(url_02, data_02)
                 print("登录失败，重新激活！")
+                return 0
+            elif res.json().get("status") == "error":
                 return 0
             # print(res.status_code)
             assert res.status_code == 200
@@ -797,8 +808,8 @@ class Automation_malaysia():
             reg = r'<input type="hidden" id="ipAddress" name="ipAddress" value="(.*?)" />'
             ipaddr = re.findall(reg, res.text)[0]
             # answer = self.get_answer(res)
-            url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-            img = self.req.get(url).content
+            img = self.get_img()
+            # img = self.req.get(url).content
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
             print("验证码为:", answer)
@@ -1127,7 +1138,7 @@ class Automation_malaysia():
         driver.Wait("J_newBtn", sleep=1)
         time.sleep(1)
         try:
-            alert = driver.switch_to_alert()
+            alert = driver.driver.switch_to_alert()
             if "异常" in alert.text:
                 red.set("alipay", "1", redis_time)
                 alert.accept()
