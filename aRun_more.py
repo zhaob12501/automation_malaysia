@@ -1,76 +1,73 @@
 import json
 import time
 
-from pipelines import Conn
-from settings import pool, redis, NUM
+import requests
+
+from pipelines import Conn, RedisQueue
+from settings import ALIPAY_KEY, MALAYSIA_KEY, MALA_NUM_KEY, NUM, pool, redis
+from tasks import task_malaysia
 
 
 class Pipe(object):
     def __init__(self):
         self.conn = Conn()
-        self.redis = redis.Redis(connection_pool=pool, db=0)
+        # 马来西亚 gid
+        self.red_mala = RedisQueue(MALAYSIA_KEY)
+        # 马来西亚 是否正在付款
+        self.red_alipay = RedisQueue(ALIPAY_KEY)
+        # 马来西亚 mpid 存在个数
+        self.red_num = RedisQueue(MALA_NUM_KEY)
 
     # 查询
-    def select_info(self, leng=4):
-        length = self.redis.scard("malaysia")
-        NoUser = self.redis.get("nouser")
+    def select_info(self, leng=NUM):
+        length = self.red_mala.hlen
         if length >= leng:
             return length
-        sql = 'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, ' \
-            'type from dc_business_email ' \
-            'where type = 1 or type=2 order by id limit %s' % leng
-        # f'where id=500'
+        sql = 'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type, mpid ' \
+            'from dc_business_email where type = 1 or type=2'  # limit %s' % NUM
         resp = self.conn.select_all(sql)
-        if len(resp) == 0:
-            if not NoUser:
-                print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
-                self.redis.set("nouser", "1", 60 * 30)
-        else:
+        if len(resp):
             for res in resp:
-                if length < leng:
-                    Bool = self.redis.sismember("malaysia", res[7])
-                    if not Bool:
-                        # gid 加入集合, 防止再次加入任务
-                        length += 1
-                        from tasks import task_malaysia
-                        insert_info = (
-                            "插入",
-                            res[0],
-                            res[3],
-                            res[4],
-                            res[5],
-                            res[6],
-                            res[7],
-                            time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "redis length:%s" % length
-                        )
-                        print("\n", insert_info, "\n")
-                        self.redis.sadd("malaysia", res[7])
-                        with open("logs/insert_info.log", "a") as f:
-                            f.write(json.dumps(insert_info) + "\n")
-                        task_malaysia.delay(res)
-                        time.sleep(10)
-        # print('\n执行任务结束...\n')
+                if res[6] == 1:
+                    url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                    requests.post(url, data={"email": res[1], "type": "3"})
+                    continue
+                # 如果正在付款, 跳过
+                if self.red_alipay.hexists(res[1]):
+                    continue
+                # 如果线程已满, 跳出
+                if length >= leng:
+                    break
+                # 所有 mpid 占用线程个数的最小值
+                mins = min([int(self.red_num.hget(j)) if not self.red_num.hset(j, 0) else 0 for j in set(i[9] for i in resp)])
+                # 本个 mpid 占用线程的个数 是否最小 以及 gid 是否存在
+                if mins == int(self.red_num.hget(res[9])) and self.red_mala.hset(res[7], f"{res[0]}-{res[1]}"):
+                    length += 1
+                    self.red_num.hincrby(res[9], 1)
+                    insert_info = (
+                        "插入", res[0], res[3], res[4],
+                        res[5], res[6], res[7], time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "redis length:%s" % length
+                    )
+                    print("\n", insert_info, "\n")
+                    task_malaysia.delay(res)
+                    time.sleep(2)
+        elif not self.red_mala.db.get("nouser"):
+                print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
+                self.red_mala.db.set("nouser", "1", 60 * 30)
         return length
 
 
 def main():
-
     while 1:
         try:
-            # print('-' * 30)
-            # print("马来西亚电子签", time.strftime('%Y-%m-%d %H:%M:%S'))
-            # print('-' * 30)
             p = Pipe()
-            length = p.select_info(leng=NUM)
-            # input("===")
+            p.select_info()
             time.sleep(1)
-            # print(length)
         except Exception as e:
             print(e)
             time.sleep(5)
 
 
 if __name__ == '__main__':
-    # time.sleep(60)
     main()

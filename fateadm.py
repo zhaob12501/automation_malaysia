@@ -1,11 +1,13 @@
 # coding=utf-8
-import os,sys
 import hashlib
-import time
 import json
-import requests
-import settings
+import os
+import sys
+import time
 
+import requests
+
+import settings
 
 
 def LOG(log):
@@ -13,9 +15,11 @@ def LOG(log):
     # print(log)
     log = None
 
+
 class TmpObj():
     def __init__(self):
         self.value  = None
+
 
 class Rsp():
     def __init__(self):
@@ -43,6 +47,7 @@ class Rsp():
                     data        = jrsp_ext["result"]
                     self.pred_rsp.value     = data
 
+
 def CalcSign(pd_id, passwd, timestamp):
     md5     = hashlib.md5()
     md5.update((timestamp + passwd).encode())
@@ -53,16 +58,18 @@ def CalcSign(pd_id, passwd, timestamp):
     csign   = md5.hexdigest()
     return csign
 
+
 def CalcCardSign(cardid, cardkey, timestamp, passwd):
     md5     = hashlib.md5()
     md5.update(passwd + timestamp + cardid + cardkey)
     return md5.hexdigest()
 
+
 def HttpRequest(url, body_data, img_data=""):
     rsp         = Rsp()
     post_data   = body_data
     files       = {
-        'img_data':('img_data',img_data)
+        'img_data': ('img_data', img_data)
     }
     header      = {
         'User-Agent': 'Mozilla/5.0',
@@ -70,6 +77,7 @@ def HttpRequest(url, body_data, img_data=""):
     rsp_data    = requests.post(url, post_data, files=files , headers=header)
     rsp.ParseJsonRsp(rsp_data.text)
     return rsp
+
 
 class FateadmApi():
     pd_id   = settings.PD_ID
@@ -94,8 +102,8 @@ class FateadmApi():
         sign    = CalcSign(self.pd_id, self.pd_key, tm)
         param   = {
             "user_id": self.pd_id,
-            "timestamp":tm,
-            "sign":sign
+            "timestamp": tm,
+            "sign": sign
         }
         url     = self.host + "/api/custval"
         rsp     = HttpRequest(url, param)
@@ -117,9 +125,9 @@ class FateadmApi():
         sign        = CalcSign(self.pd_id, self.pd_key, tm)
         param       = {
             "user_id": self.pd_id,
-            "timestamp":tm,
-            "sign":sign,
-            "predict_type":pred_type,
+            "timestamp": tm,
+            "sign": sign,
+            "predict_type": pred_type,
         }
         if self.app_id != "":
             #
@@ -181,7 +189,7 @@ class FateadmApi():
     #   rsp.pred_rsp.value：识别结果
     #   rsp.err_msg：异常时返回异常详情
     #
-    def PredictFromFile(self, pred_type, file_name, head_info = ""):
+    def PredictFromFile(self, pred_type, file_name, head_info=""):
         with open(file_name, "rb") as f:
             data = f.read()
         return self.Predict(pred_type, data, head_info=head_info)
@@ -205,11 +213,11 @@ class FateadmApi():
         tm          = str(int(time.time()))
         sign        = CalcSign(self.pd_id, self.pd_key, tm)
         param       = {
-                "user_id": self.pd_id,
-                "timestamp":tm,
-                "sign":sign,
-                "request_id":request_id
-                }
+            "user_id": self.pd_id,
+            "timestamp": tm,
+            "sign": sign,
+            "request_id": request_id
+        }
         url     = self.host + "/api/capjust"
         rsp     = HttpRequest(url, param)
         if rsp.ret_code == 0:
@@ -230,12 +238,12 @@ class FateadmApi():
         sign        = CalcSign(self.pd_id, self.pd_key, tm)
         csign       = CalcCardSign(cardid, cardkey, tm, self.pd_key)
         param       = {
-                "user_id": self.pd_id,
-                "timestamp":tm,
-                "sign":sign,
-                'cardid':cardid,
-                'csign':csign
-                }
+            "user_id": self.pd_id,
+            "timestamp": tm,
+            "sign": sign,
+            'cardid': cardid,
+            'csign': csign
+        }
         url     = self.host + "/api/charge"
         rsp     = HttpRequest(url, param)
         if rsp.ret_code == 0:
@@ -250,7 +258,7 @@ class FateadmApi():
     # 返回值： 充值成功时返回0
     ##
     def ExtendCharge(self, cardid, cardkey):
-        return self.Charge(cardid,cardkey).ret_code
+        return self.Charge(cardid, cardkey).ret_code
 
     ##
     # 调用退款，只返回是否成功
@@ -279,8 +287,8 @@ class FateadmApi():
     # 参数：pred_type;识别类型  file_name:文件名
     # 返回值： rsp.pred_rsp.value：识别的结果
     ##
-    def PredictFromFileExtend(self, pred_type, file_name, head_info = ""):
-        rsp = self.PredictFromFile(pred_type,file_name,head_info)
+    def PredictFromFileExtend(self, pred_type, file_name, head_info=""):
+        rsp = self.PredictFromFile(pred_type, file_name, head_info)
         return rsp.pred_rsp.value
 
     ##
@@ -292,7 +300,8 @@ class FateadmApi():
         rsp = self.Predict(pred_type, img_data, head_info)
         return rsp.pred_rsp.value
 
-def Captcha(operating=1, img_data=None, path=None, rsp=None, pred_type="80300"):
+
+def Captcha(operating=1, img_data=None, path=None, rsp=None, pred_type="803000001"):
     """ 调用打码API \
     \n参数: operating:
     1 : url 返回识别结果
@@ -322,12 +331,9 @@ def Captcha(operating=1, img_data=None, path=None, rsp=None, pred_type="80300"):
         # 识别的结果如果与预期不符，可以调用这个接口将预期不符的订单退款
         # 退款仅在正常识别出结果后，无法通过网站验证的情况，请勿非法或者滥用，否则可能进行封号处理
         return api.Justice(rsp.request_id)
-    
+
 
 if __name__ == "__main__":
     rsp = Captcha(2, path="code.png")
     print(rsp.ret_code)
     print(rsp.ret_code)
-    
-
-

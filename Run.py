@@ -1,20 +1,29 @@
 import subprocess
 import time
 
-from settings import NUM, pool, redis
+from settings import NUM, pool, pool_alipay, redis
 
 r = redis.StrictRedis(connection_pool=pool)
+rd = redis.StrictRedis(connection_pool=pool_alipay)
 r.flushdb()
-print(r.keys())
+rd.delete("l_queue:malaysia")
+rd.delete("h_queue:malaysia")
 
-time.sleep(5)
+time.sleep(3)
 
 try:
     subprocess.Popen(f"celery -A tasks worker -l info -c {NUM}", shell=True)
 except KeyboardInterrupt:
     print("用户退出")
 
-time.sleep(5)
+time.sleep(3)
+
+# try:
+#     subprocess.Popen("python alipay.py", shell=True)
+# except KeyboardInterrupt:
+#     print("用户退出")
+
+time.sleep(3)
 
 try:
     subprocess.Popen("python aRun_more.py", shell=True)

@@ -63,7 +63,7 @@ class Base:
         self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
         # 设置隐性等待时间, timeout = 20
         # self.driver.implicitly_wait(10)
-        self.driver.maximize_window()
+        # self.driver.maximize_window()
 
     # 检测元素 / 点击 / 发送字符 / 选择下拉框
     def Wait(self, idName=None, text=None, timeout=5, sleep=0.1, **kwargs):
@@ -76,7 +76,10 @@ class Base:
                 xpath or css or tag_name or class_name or name
         """
         assert idName or kwargs
-        time.sleep(sleep)
+        try:
+            time.sleep(sleep)
+        except:
+            pass
         if idName:
             locator = (By.ID, idName)
         elif kwargs.get("xpath"):

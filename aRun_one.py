@@ -2,16 +2,22 @@ import os
 import time
 
 import requests
-
+from pipelines import Conn, RedisQueue
 from automation_malaysia import Automation_malaysia
 from email163 import Email
-from settings import POOL
+from settings import POOL, MALAYSIA_KEY, ALIPAY_KEY
+from tasks import task_alipay
+from pipelines import RedisQueue
+
+task_alipay.delay()
 
 
 class Pipe():
     def __init__(self):
         self.con = POOL.connection()
         self.cur = self.con.cursor()
+        self.red = RedisQueue(MALAYSIA_KEY)
+        self.red_a = RedisQueue(ALIPAY_KEY)
 
     # 查询
     def select_info(self):
@@ -21,16 +27,20 @@ class Pipe():
                 # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid '\
                 # f'from dc_business_email where id = 3317'
             sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type ' \
-                'from dc_business_email where (type=1 or type=2)'  # and act_status=1 and sub_status!=1'
+                'from dc_business_email where (type=1 or type=2) and mpid=151'  # and act_status=1 and sub_status!=1'
             self.cur.execute(sql)
             res = self.cur.fetchone()
-            # print(1, res)
+            for _ in range(10):
+                if not res or not self.red_a.hexists(res[1]):
+                    break
+                res = self.cur.fetchone()
+            print(1, res)
             if res:
-
-                if res[3] is 1 and res[4] is 1 and res[5] is 1 and res[6] is 1:
-                    url = 'http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question'
-                    data = {'email': res[1], 'type': 3}
-                    requests.post(url, data=data)
+                if res[6] == 1:
+                    url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                    requests.post(url, data={"email": res[1], "type": "3"})
+                    return
+                if self.red.hexists(res[1]):
                     return
                 sql_gongg = 'select * from dc_business_malaysia_group where tids =' + \
                     str(res[7])
@@ -58,7 +68,7 @@ class Pipe():
 
 def main():
     while 1:
-        os.system("cls")
+
         try:
             print('-' * 30)
             print("马来西亚电子签", time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -85,20 +95,22 @@ def main():
             try:
                 # 邮箱注册
                 if (not res[3]) or (res[3] is 2):
-                    print('in reg')
+                    print('\n==============\n邮箱注册\n==============')
                     r.registe()
                     time.sleep(2)
                     continue
                 # 邮箱激活
                 if res[3] is 1 and (not res[4] or res[4] is 2):
+                    print('\n==============\n邮箱激活\n==============')
                     e = Email()
                     e.getData(res[1], res[2])
                     del e
                     continue
                 if "eNTRI" in res_group[0][9]:
-                    print('\n--- 15天 ----\n')
-                    # 邮箱登录
+                    # print('\n--- 15天 ----\n')
+                    # 登录-填写信息
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
+                        print('\n==============\n登录-填写信息\n==============')
                         print('in login')
                         r.login()
                         time.sleep(2)
@@ -118,7 +130,7 @@ def main():
                     # 邮箱登录
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
                         print('in login')
-                        r.thLogin()
+                        # r.thLogin()
                         continue
                     # 获取签证
                     if not res[6] and res[5] is 1:

@@ -14,7 +14,7 @@ NC = "noClick"
 class Base:
     """ 浏览器基类, 保持同一个 driver """
 
-    def __init__(self, no_win=None):
+    def __init__(self, no_win=True):
         self.path = sys.path[0] + '\\'
         self.usUrl = 'https://ceac.state.gov/GenNIV/Default.aspx'
         self.payUrl = 'https://cgifederal.secure.force.com/'
@@ -24,8 +24,9 @@ class Base:
 
         # 不加载图片
         # self.chrome_options.add_argument('blink-settings=imagesEnabled=false')
-        # 无界面   
-        self.chrome_options.add_argument('--headless')
+        # 无界面
+        if no_win:
+            self.chrome_options.add_argument('--headless')
         # 设置代理
         # self.chrome_options.add_argument('--proxy-server=http://127.0.0.1:1080')
         # 设置浏览器窗口大小
@@ -90,7 +91,7 @@ class Base:
 
     def waitIdSel(self, idlist=None, selist=None):
         """ 对 idlist 进行点击/发送字符串 或对 selist 进行选择
-            Returns: 
+            Returns:
                 [] 空列表
         """
         if idlist:
@@ -168,4 +169,4 @@ class Email(Base):
 
 if __name__ == '__main__':
     e = Email()
-    e.getData(1, 1)    
+    e.getData(1, 1)
