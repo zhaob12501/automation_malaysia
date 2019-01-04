@@ -84,12 +84,8 @@ def task_malaysia(res):
         elif "eNTRI" in res_group[0][9]:
             print('\n--- 15天 ----\n')
             # 邮箱登录
-            print('=\n==============\n登录-填写信息\n==============')
             if res[5] != 1 and res[4] == 1:
-                t = random() * 10
-                print(t)
-                time.sleep(t)
-                print('登录-付款....')
+                print('=\n==============\n登录-填写信息\n==============')
                 r.login()
 
             # 获取签证

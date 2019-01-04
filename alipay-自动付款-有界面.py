@@ -19,17 +19,19 @@ if __name__ == "__main__":
                     a = ali_pay(email, url, False)
                     del a
                     red.hdel(email)
+                    red.db.delete("nouser_pay")
                     print("\n", "-*" * 20, "\n", "AliPay Over", "\n", email, "\n", timess()-st, "\n", "-*" * 20)
             else:
                 if len(red.hgetall) != len(red.lgetall):
                     [red.hdel(i) for i in red.hgetall if i not in red.lgetall]
                     continue
-                print("No pay", time.strftime("%Y-%m-%d %H:%M:%S"))
-                time.sleep(5)
+                if not red.db.get("nouser_pay"):
+                    print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
+                    red.db.set("nouser_pay", "1", 60 * 30)
         except Exception:
             pass
         finally:
             if email:
                 pay_over(email)
                 red.hdel(email)
-            time.sleep(3)
+            time.sleep(5)

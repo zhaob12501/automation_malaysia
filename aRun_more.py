@@ -36,7 +36,7 @@ class Pipe(object):
                 if self.red_alipay.hexists(res[1]):
                     continue
                 # 如果线程已满, 跳出
-                if length >= leng:
+                if length >= leng or length >= (self.red_num.qsize + 5):
                     break
                 # 所有 mpid 占用线程个数的最小值
                 mins = min([int(self.red_num.hget(j)) if not self.red_num.hset(j, 0) else 0 for j in set(i[9] for i in resp)])

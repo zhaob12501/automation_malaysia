@@ -22,7 +22,7 @@ class Base:
 
     # chrome_options.add_extension(extension_path)
 
-    def __init__(self, no_win=False, no_img=False):
+    def __init__(self, no_win=False, no_img=False, proxy=None):
         # 不加载图片
         if no_img:
             self.chrome_options.add_argument(
@@ -31,7 +31,8 @@ class Base:
         if no_win:
             self.chrome_options.add_argument('--headless')
         # 设置代理
-        # self.chrome_options.add_argument('--proxy-server=http://127.0.0.1:1080')
+        if proxy:
+            self.chrome_options.add_argument(f'--proxy-server=http://{proxy}')
 
         # for linux/*nix, download_dir="/usr/Public"
         download_dir = os.path.join(BASEDIR, 'files')

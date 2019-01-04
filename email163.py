@@ -165,6 +165,8 @@ class Email(Base):
             data_02 = {"email": email, "status": "4"}
             requests.post(url_02, data_02)
             return 0
+        finally:
+            self.driver.quit()
 
 
 if __name__ == '__main__':

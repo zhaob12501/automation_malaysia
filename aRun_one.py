@@ -2,14 +2,11 @@ import os
 import time
 
 import requests
-from pipelines import Conn, RedisQueue
+
 from automation_malaysia import Automation_malaysia
 from email163 import Email
-from settings import POOL, MALAYSIA_KEY, ALIPAY_KEY
-from tasks import task_alipay
-from pipelines import RedisQueue
-
-task_alipay.delay()
+from pipelines import Conn, RedisQueue
+from settings import ALIPAY_KEY, MALAYSIA_KEY, POOL
 
 
 class Pipe():
@@ -24,10 +21,10 @@ class Pipe():
         try:
             # for n1, n2 in [(1, 1), (1, 0), (2, 1), (2, 0)]:
                 # print(n1, n2)
-                # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid '\
-                # f'from dc_business_email where id = 3317'
-            sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type ' \
-                'from dc_business_email where (type=1 or type=2) and mpid=151'  # and act_status=1 and sub_status!=1'
+            sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid '\
+                f'from dc_business_email where id = 7014'
+            # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type ' \
+            #     'from dc_business_email where (type=1 or type=2)'   # and mpid=151'and act_status=1 and sub_status!=1'
             self.cur.execute(sql)
             res = self.cur.fetchone()
             for _ in range(10):
@@ -56,8 +53,8 @@ class Pipe():
                 else:
                     print("数据库查询出现空值")
                     return res, 0, 0
-                print('\n未查询到数据...等待5s重新查询...\n')
-                return 0, 0, 0
+            print('\n未查询到数据...等待5s重新查询...\n')
+            return 0, 0, 0
         except Exception:
             return 0, 0, 0
 
@@ -130,7 +127,7 @@ def main():
                     # 邮箱登录
                     if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
                         print('in login')
-                        # r.thLogin()
+                        r.thLogin()
                         continue
                     # 获取签证
                     if not res[6] and res[5] is 1:
