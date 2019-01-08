@@ -1,11 +1,9 @@
-import base64
-import json
 import time
 
 import requests
 
 
-def progress(url, head=None, data=False, **kwargs):
+def progress(url, head=None, path=None, **kwargs):
     """ 进度条显示下载过程 """
     # url = 'http://pecl.php.net/get/pecl_http-3.2.0.tgz'
 
@@ -26,7 +24,7 @@ def progress(url, head=None, data=False, **kwargs):
     unit = ("KB", US["KB"]) if content_size < US["MB"] else ("MB", US["MB"]) if content_size < US["GB"] else ("GB", US["GB"]) if content_size < US["TB"] else ("TB", US["TB"])
     if result.status_code == 200:
         print("[文件大小] {:.2f} {}".format(content_size / unit[1], unit[0]))
-        with open("files/aaa.tgz", "wb") as f:
+        with open(path, "wb") as f:
             for data in result.iter_content(chunk_size=US['KB']):
                 f.write(data)
                 size += len(data)
@@ -41,7 +39,3 @@ def progress(url, head=None, data=False, **kwargs):
 
 
 progress(url='http://pecl.php.net/get/pecl_http-3.2.0.tgz')
-# from time import sleep
-# from tqdm import tqdm
-# for i in tqdm(range(500)):
-#     sleep(0.01)

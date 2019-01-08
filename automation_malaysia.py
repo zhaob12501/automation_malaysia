@@ -633,9 +633,6 @@ class Automation_malaysia():
             # -------------------------------------------------------------- #
             # ======= 获取照片 图片 ======================================= #
             rsp_phone = requests.get(self.res_info[23], timeout=10).content
-            # rsp_phone = requests.get("http://qiniuyun.mobtop.com.cn/png1546054626_50927109.png", timeout=10).content
-            # with open("photo.jpg", "rb") as f:
-            #     rsp_phone = f.read()
             # ======= 获取护照 图片 ======================================= #
             rsp_hz = requests.get(self.res_info[20], timeout=10).content
             # ======= 获取航班 图片 ======================================== #
@@ -839,7 +836,12 @@ class Automation_malaysia():
             apliay_url = f'https://mapi.alipay.com/gateway.do?subject={subject}&sign={sign}&split_fund_info={split_fund_info}&'\
                 f'notify_url={notify_url}&body={body}&product_code={product_code}&out_trade_no={out_trade_no}&partner={partner}&'\
                 f'service={service}&rmb_fee={rmb_fee}&return_url={return_url}&currency={currency}&sign_type={sign_type}'
-            self.pay(uAppNumber, res)
+            # 付款
+            # self.pay(uAppNumber, apliay_url)
+            # self.alipay(uAppNumber, apliay_url)
+            red = RedisQueue(ALIPAY_KEY)
+            print(red.hset(self.email, apliay_url))
+            print(len(red.hgetall))
         except Exception as e:
             print(e)
             time.sleep(10)
@@ -865,7 +867,6 @@ class Automation_malaysia():
             answer = rsp.pred_rsp.value
             print("验证码为:", answer)
             # ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
-            # answer = ans if ans else answer
 
             url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&'\
                 f'answer={answer}&_={int(time.time()*1000)}'
@@ -919,7 +920,7 @@ class Automation_malaysia():
                     visa_data = {"email": self.email}
                     self.req.post(
                         "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data)
-                    url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+                    # url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
                     return 1
             visa_url = 'https://www.windowmalaysia.my/entri/note?appNumber=' + appnumber
             pay_url = 'https://www.windowmalaysia.my/entri/jasperpayment?appNumber=' + appnumber
@@ -939,7 +940,7 @@ class Automation_malaysia():
             visa_data = {"email": self.email}
             self.req.post(
                 "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getVisaStatus", data=visa_data, timeout=10)
-            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
+            # url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
 
     # 照片判断
     def setPhoto(self, res, murl, size=None):

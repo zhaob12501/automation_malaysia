@@ -65,7 +65,6 @@ class Pipe():
 
 def main():
     while 1:
-
         try:
             print('-' * 30)
             print("马来西亚电子签", time.strftime('%Y-%m-%d %H:%M:%S'))

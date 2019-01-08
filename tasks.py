@@ -16,7 +16,7 @@ from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from settings import (ALIPAY_KEY, MALA_NUM_KEY, BROKER_URL, GLOBAL_DATA, MALAYSIA_KEY, NC,
-                      alipay_Keys, pool)
+                      alipay_Keys, pool, updateHttp)
 
 # 1-支付宝
 alipay_user = GLOBAL_DATA[5]
@@ -92,6 +92,18 @@ def task_malaysia(res):
             elif res[6] != 1 and res[5] == 1:
                 print('=\n==============\n开始获取电子签\n==============')
                 r.get_visa()
+        elif "eVISA" in res_group[0][9]:
+            print('\n--- 30天 ----\n')
+            # 邮箱登录
+            if (not res[5] or res[5] is 2 or res[5] is 4) and res[4] is 1:
+                print('in login')
+                r.thLogin()
+            # 获取签证
+            if not res[6] and res[5] is 1:
+                print('in visa')
+                # r.get_visa()
+                print("获取签证「30 天」")
+                updateHttp(tb="business_email", save={"type": "4"}, where="gid=%s" % res[7])
     except SoftTimeLimitExceeded as e:
         print(f"SoftTimeLimitExceeded: {e}")
     except Exception as e:
