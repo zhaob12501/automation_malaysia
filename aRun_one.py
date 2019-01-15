@@ -21,10 +21,10 @@ class Pipe():
         try:
             # for n1, n2 in [(1, 1), (1, 0), (2, 1), (2, 0)]:
                 # print(n1, n2)
-            sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid '\
-                f'from dc_business_email where id = 7014'
-            # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type ' \
-            #     'from dc_business_email where (type=1 or type=2)'   # and mpid=151'and act_status=1 and sub_status!=1'
+            sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type ' \
+                'from dc_business_email where (type=1 or type=2)'   # and mpid=151'and act_status=1 and sub_status!=1'
+            # sql = f'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type '\
+            #     f'from dc_business_email where gid = 8189'
             self.cur.execute(sql)
             res = self.cur.fetchone()
             for _ in range(10):

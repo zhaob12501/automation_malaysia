@@ -20,7 +20,7 @@ from selenium.webdriver.common.keys import Keys
 from Base import Base
 from fateadm import Captcha
 from pipelines import RedisQueue
-from settings import ALIPAY_KEY, GLOBAL_DATA, NC, alipay_Keys, pool, redis
+from settings import ALIPAY_KEY, GLOBAL_DATA, NC, alipay_Keys, pool, redis, updateHttp
 
 # from selenium.webdriver.support.ui import WebDriverWait
 
@@ -120,7 +120,7 @@ class Automation_malaysia():
             #     time.sleep(1)
             #     self.req.get(f'https://www.windowmalaysia.my/evisa/resendVerification?email={self.email}', timeout=10)
             return 1
-        Captcha(4, rsp=rsp)
+        # Captcha(4, rsp=rsp)
         # print('注册失败!...')
         url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
         data = {"email": self.email, "status": "2"}
@@ -235,10 +235,11 @@ class Automation_malaysia():
             print(res.json().get("status"))
             print()
             if res.json().get("status") == "conEstablished":
-                Captcha(4, rsp=rsp)
-                # url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                # data_02 = {"email": self.email, "status": "4"}
-                # requests.post(url_02, data_02, timeout=10)
+                return 0
+            elif res.json().get("status") == "fail":
+                url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
+                data_02 = {"email": self.email, "status": "4"}
+                requests.post(url_02, data_02, timeout=10)
                 # print("登录失败，重新激活！")
                 return 0
             elif res.json().get("status") == "error":
@@ -286,7 +287,7 @@ class Automation_malaysia():
                 url = f'https://www.windowmalaysia.my/entri/registration.jsp?appNumber={uAppNumber}'
                 # print(url)
                 res = self.req.get(url, timeout=10)
-                print('正在上传人脸信息...')
+                print('正在上传照片信息...')
 
                 reg = r'<input type="hidden" name="uUser" id="uUser" value="(.*?)"\s?/>'
                 uUser = re.findall(reg, res.text)[0]
@@ -299,7 +300,7 @@ class Automation_malaysia():
                 }
                 res = self.req.post(
                     'https://www.windowmalaysia.my/entri/photo', files=_files, timeout=10)
-                print('上传信息成功')
+                print('上传照片信息成功')
             else:
                 print('in new visa')
                 registe_url = 'https://www.windowmalaysia.my/entri/registration.jsp'
@@ -323,6 +324,7 @@ class Automation_malaysia():
                 # print(_files)
                 res = self.req.post(
                     'https://www.windowmalaysia.my/entri/photo', files=_files, timeout=10)
+                print('上传照片信息成功')
 
                 reg = r'<input type="hidden" name="uAppNumber" id="uAppNumber" value="(.*?)"\s?/>'
                 uAppNumber = re.findall(reg, res.text)[0]
@@ -338,6 +340,8 @@ class Automation_malaysia():
                 }
                 res = self.req.post(
                     'https://www.windowmalaysia.my/entri/passport', files=_files1, timeout=10)
+                print('上传护照信息成功')
+
                 reg = r'<input type="hidden" name="appNumber" id="appNumber" value="(.*?)"\s?/>'
                 uAppNumber = re.findall(reg, res.text)[0]
                 time.sleep(1)
@@ -354,10 +358,10 @@ class Automation_malaysia():
                 }
                 res = self.req.post(
                     'https://www.windowmalaysia.my/entri/itinerary', files=_files, timeout=10)
-                print('上传信息成功')
+                print('上传航班信息成功')
 
                 if self.res_info[45]:
-                    if url.split('.')[-1] != 'pdf':
+                    if self.res_info[45].split('.')[-1] == 'pdf':
                         print('正在上传其他信息...')
                         pdf = requests.get(self.res_info[45], timeout=10).content
                         _files1 = {
@@ -368,12 +372,12 @@ class Automation_malaysia():
                         }
                         res = self.req.post(
                             'https://www.windowmalaysia.my/entri/itinerary', files=_files1, timeout=10)
-                        print('上传信息成功')
+                        print('上传其他信息成功')
                     else:
                         print('其他文件格式不正确')
 
             reg = r'<input type="hidden" name="appVisaNumber" id="appVisaNumber" value="(.*?)"\s?/>'
-            appVisaNumber = re.findall(reg, res.text)
+            appVisaNumber = re.findall(reg, res.text)[0]
             data = {
                 'countryId': '47',
                 'user': uUser,
@@ -500,7 +504,7 @@ class Automation_malaysia():
             branchCode = re.findall(ret, res.text)[0]
             ret = r'<input type="hidden" name="keyOutTradeNo" id="keyOutTradeNo" value="(.*?)">'
             keyOutTradeNo = re.findall(ret, res.text)[0]
-            ret = '<input type="hidden" name="user" id="user" value="(.*?)"\s?/>'
+            ret = r'<input type="hidden" name="user" id="user" value="(.*?)"\s?/>'
             user = re.findall(ret, res.text)[0]
             url = 'https://www.windowmalaysia.my/entri/split_alipayapi.jsp'
             data = {
@@ -562,6 +566,13 @@ class Automation_malaysia():
 
     # 30天 登陆-付款
     def thLogin(self):
+        ri, rg = self.res_info, self.res_group
+        infos = ri[3] and ri[5] and ri[9] and ri[10] and ri[12] and ri[20] and ri[23] and \
+            ri[24] and ri[25] and ri[26] and ri[29] and ri[31] and ri[32] and ri[33] and ri[34] and \
+            ri[35] and ri[36] and ri[37] and rg[31] and rg[18] and rg[24] and rg[36]
+        if not infos:
+            updateHttp(where=f"gid={self.res[7]}", save={"type": 0, "ques": "信息不完整"})
+            return "信息不完整"
         try:
             # self.img_url(self.res, self.res_info, self.res_group)
             print('正在执行登录...')
@@ -756,26 +767,27 @@ class Automation_malaysia():
                 print('123s')
                 print(data_photo)
                 requests.post(url, data_photo, timeout=10)
+                return -1
 
             okurl = f"https://www.windowmalaysia.my/evisa/updateRotation?rotPhotoP=0&rotPpt=0&rotPptL=0&"\
                 f"applicantId={uApplicantId}&appNumber={uAppNumber}"
             res = self.req.get(okurl, timeout=10)
 
-            """
-            <input type="hidden" name="appTotal" id="appTotal" value="1"\s?/>
-            <input type="hidden" name="ccNumber" id="ccNumber" value=""\s?/>
-            <input type="hidden" name="expiryDate" id="expiryDate" value=""\s?/>
-            <input type="hidden" name="branchCurrency" id="branchCurrency" value="RMB"\s?/>
-            <input type="hidden" name="branchCode" id="branchCode" value="1034121"\s?/>
-            <input type="hidden" name="appDocNumber" id="appDocNumber" value="G59897649"\s?/>
-            <input type="hidden" name="appDocNationality" id="appDocNationality" value="CHN"\s?/>
-            <input type="hidden" name="visaFee" id="visaFee" value="80.0"\s?/>
-            <input type="hidden" name="convenienceFee" id="convenienceFee" value="0.0"\s?/>
-            <input type="hidden" name="courierFee" id="courierFee" value="0.0"\s?/>
-            <input type="hidden" name="processingFee" id="processingFee" value="200.0"\s?/>
-            <input type="hidden" name="totalFee" id="totalFee" value="280.0"\s?/>
-            <input type='hidden' id='payMethodId' name='payMethodId' value='21'\s?/>
-            <input type="radio" name="paymentType" class="cpaytype" id="paymentType" value="alipaysplit">
+            r"""
+                <input type="hidden" name="appTotal" id="appTotal" value="1"\s?/>
+                <input type="hidden" name="ccNumber" id="ccNumber" value=""\s?/>
+                <input type="hidden" name="expiryDate" id="expiryDate" value=""\s?/>
+                <input type="hidden" name="branchCurrency" id="branchCurrency" value="RMB"\s?/>
+                <input type="hidden" name="branchCode" id="branchCode" value="1034121"\s?/>
+                <input type="hidden" name="appDocNumber" id="appDocNumber" value="G59897649"\s?/>
+                <input type="hidden" name="appDocNationality" id="appDocNationality" value="CHN"\s?/>
+                <input type="hidden" name="visaFee" id="visaFee" value="80.0"\s?/>
+                <input type="hidden" name="convenienceFee" id="convenienceFee" value="0.0"\s?/>
+                <input type="hidden" name="courierFee" id="courierFee" value="0.0"\s?/>
+                <input type="hidden" name="processingFee" id="processingFee" value="200.0"\s?/>
+                <input type="hidden" name="totalFee" id="totalFee" value="280.0"\s?/>
+                <input type='hidden' id='payMethodId' name='payMethodId' value='21'\s?/>
+                <input type="radio" name="paymentType" class="cpaytype" id="paymentType" value="alipaysplit">
             """
 
             reg = r'<input type="hidden" name="branchCode" id="branchCode" value="(.*?)"\s?/>'
@@ -875,7 +887,7 @@ class Automation_malaysia():
             # print(self.req.headers)
             print(res.text)
             if res.json().get("status") != "success":
-                Captcha(4, rsp=rsp)
+                # Captcha(4, rsp=rsp)
                 # print("登录失败，重新登陆！")
                 return 0
             assert res.status_code == 200

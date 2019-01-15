@@ -41,7 +41,7 @@ class Pipe(object):
                 # 所有 mpid 占用线程个数的最小值
                 mins = min([int(self.red_num.hget(j)) if not self.red_num.hset(j, 0) else 0 for j in set(i[9] for i in resp)])
                 # 本个 mpid 占用线程的个数 是否最小 以及 gid 是否存在
-                if mins == int(self.red_num.hget(res[9])) and self.red_mala.hset(res[7], f"{res[0]}-{res[1]}"):
+                if mins == int(self.red_num.hget(res[9])) and self.red_mala.hset(res[7], f"{res[0]}-{res[1]}-{time.time()}"):
                     length += 1
                     self.red_num.hincrby(res[9], 1)
                     insert_info = (
@@ -52,6 +52,10 @@ class Pipe(object):
                     print("\n", insert_info, "\n")
                     task_malaysia.delay(res)
                     time.sleep(2)
+                elif self.red_mala.hexists(res[7]):
+                    if time.time() - float(self.red_mala.hget(res[7]).split("-")[-1]) > 330:
+                        self.red_mala.hdel(res[7])
+                        self.red_num.hincrby(res[9], -1)
         elif not self.red_mala.db.get("nouser"):
                 print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
                 self.red_mala.db.set("nouser", "1", 60 * 30)
