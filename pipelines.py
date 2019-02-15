@@ -108,9 +108,3 @@ class RedisQueue(object):
 
     def bytes_str(self, byte):
         return byte.decode("utf8") if byte.__class__ is bytes else str(byte) if byte else byte
-
-
-if __name__ == "__main__":
-    r = RedisQueue("a")
-    print(r.hgetall)
-    print(r.hgetall)

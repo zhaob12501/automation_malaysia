@@ -3,6 +3,7 @@ from time import sleep
 
 import selenium
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 # from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -152,13 +153,15 @@ class Email(Base):
             content = self.driver.find_element_by_xpath('//body/div/div[4]/p[2]/a')
             em_url = content.get_attribute('href')
             print(em_url)
-            res = requests.get(em_url)
+            requests.get(em_url)
             print("激活成功")
             act_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
             act_data = {"email": email, "status": "3"}
             requests.post(act_url, data=act_data)
             sleep(3)
             return 1
+        except TimeoutException as e:
+            self.driver.execute_script('window.stop()')
         except Exception as e:
             print(e, '-' * 20, sep='\n')
             url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"

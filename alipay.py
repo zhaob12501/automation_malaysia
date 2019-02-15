@@ -33,17 +33,20 @@ def timess():
 
 
 def pay_over(email):
-    print("\n\n", email, '申请成功，付款成功！', "\n\n")
-    url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
-    data = {"email": email, "status": "1"}
-    requests.post(url, data)
-    data_photo = {"email": email, "type": 1, "text": "等待电子签"}
-    url = 'http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question'
-    requests.post(url , data_photo)
-    with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
-        json.dump(
-            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{email}, 付款成功!", f)
-        f.write('\n],\n')
+    try:
+        print("\n\n", email, '申请成功，付款成功！', "\n\n")
+        url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
+        data = {"email": email, "status": "1"}
+        requests.post(url, data)
+        data_photo = {"email": email, "type": 1, "text": " "}
+        url = 'http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question'
+        requests.post(url , data_photo)
+        with open(f'visa_photo/{time.strftime("%Y%m%d")}_log.json', 'a') as f:
+            json.dump(
+                f"[{time.strftime('%Y-%m-%d %H:%M:%S')}:{email}, 付款成功!", f)
+            f.write('\n],\n')
+    except:
+        return pay_over(email)
     # time.sleep(3)
 
 
@@ -130,7 +133,7 @@ def alipay_login(driver, email, alipay_url, st_input):
             url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
             data = {"email": email, "status": "1"}
             requests.post(url, data)
-            data_photo = {"email": email, "type": 1, "text": "等待电子签"}
+            data_photo = {"email": email, "type": 1, "text": " "}
             print(data_photo)
             requests.post(
                 'http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question', data_photo)

@@ -20,12 +20,14 @@ def main():
         "http": proxy,
         "https": proxy
     }
+    print(f"使用代理: {proxy}")
     req.get(url_login)
-    for _ in range(3000):
+    for i in range(3000):
+        print(f"\r{i+1}/3000", end="")
         html = req.get(url)
         if html.status_code == 200 and html.content:
             img = html.content
-            with open(f"visa_photo/code/code{int(time.time() * 1000)}.png", "wb") as f:
+            with open(f"./code/code{int(time.time() * 1000)}.png", "wb") as f:
                 f.write(img)
         else:
             proxy = get_proxy()
@@ -33,6 +35,7 @@ def main():
                 "http": proxy,
                 "https": proxy
             }
+            print(f"更换代理: {proxy}")
 
 
 if __name__ == "__main__":

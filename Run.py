@@ -8,7 +8,8 @@ rd = redis.StrictRedis(connection_pool=pool_alipay)
 r.flushdb()
 rd.delete("l_queue:malaysia")
 rd.delete("h_queue:malaysia")
-
+if int(time.strftime("%H") < 9):
+    rd.flushall()
 time.sleep(3)
 
 try:

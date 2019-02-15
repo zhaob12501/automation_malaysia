@@ -26,6 +26,9 @@ if __name__ == "__main__":
                 if not red.db.get("nouser_pay"):
                     print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
                     red.db.set("nouser_pay", "1", 60 * 30)
+        except KeyboardInterrupt:
+            import sys
+            sys.exit()
         except Exception:
             pass
         finally:

@@ -3,6 +3,7 @@
 @file: automation_malaysia.py
 Created on 2018/05/31
 '''
+from copy import copy
 import json
 import re
 import sys
@@ -28,19 +29,6 @@ from settings import ALIPAY_KEY, GLOBAL_DATA, NC, alipay_Keys, pool, redis, upda
 alipay_user = GLOBAL_DATA[5]
 alipay_pwd = GLOBAL_DATA[6]
 
-ali_no_win = True
-st_input = False
-redis_time = 15
-
-# 2-支付宝
-# alipay_user = GLOBAL_DATA[9]
-# alipay_pwd  = GLOBAL_DATA[10]
-# alipay_Keys = (
-#     Keys.NUMPAD8, Keys.NUMPAD3, Keys.NUMPAD0,
-#     Keys.NUMPAD6, Keys.NUMPAD0, Keys.NUMPAD4)
-ali_no_win = False
-st_input = True
-
 
 class Automation_malaysia():
     '''
@@ -49,11 +37,12 @@ class Automation_malaysia():
 
     def __init__(self, res='', res_info='', res_group=''):
         print('start...')
+        self.start_time = time.time()
         self.res = res
         self.email = res[1]
         self.password = res[2]
-        self.res_info = res_info[0]
-        self.res_group = res_group[0]
+        self.res_info = res_info[0] if res_info else ""
+        self.res_group = res_group[0] if res_group else ""
         print(self.email)
         self.req = requests.Session()
 
@@ -67,9 +56,21 @@ class Automation_malaysia():
         self.path = sys.path[0] + '\\'
 
         self.req.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.10 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
         }
         self.registe_url = 'https://www.windowmalaysia.my/evisa/vlno_register.jsp?type=register'
+
+    def application(self, filename=None):
+        app = {
+            "pdf": 'application/pdf',
+            "jpg": 'image/jpg',
+            "jpeg": 'image/jpeg',
+            "png": 'image/png',
+        }
+        if filename:
+            ex = filename.split(".")[-1]
+            return app.get(ex, "image/jpg")
+        return app
 
     def requ(self, url, data=None):
         print('in requ')  # , data)
@@ -100,13 +101,20 @@ class Automation_malaysia():
         url = "https://www.windowmalaysia.my/evisa/vlno_ajax_checkUsername.jsp"
         email_res = self.req.post(url, data={"email": self.email}, timeout=10)
         if email_res.text.strip():
-            print('邮箱已被注册，更换邮箱...')
-            url_change = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-            data_p = {"email": self.email, "status": "1"}
-            res = requests.post(url_change, data_p, timeout=10).json()
+            try:
+                print('邮箱已被注册，更换邮箱...')
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/replaceEmail"
+                data_p = {"email": self.email}
+                res = requests.post(url, data_p, timeout=10).json()
+            except Exception:
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
+                data = {"email": self.email, "status": "1"}
+                rs = requests.post(url, data=data, timeout=10)
             return 0
 
-        data, rsp = self.get_data(res)
+        data, _ = self.get_data(res)
+        if not data.get("answer"):
+            return
         re_url = 'https://www.windowmalaysia.my/evisa/register'
         res = self.requ(re_url, data=data)
         print('请求发送成功...进入判断...')
@@ -135,14 +143,18 @@ class Automation_malaysia():
         url = "https://www.windowmalaysia.my/evisa/captchaImaging?_=%s" % (int(time.time() * 1000))
         # answer = self.get_answer(res, timeout=10)
         # url = "https://www.windowmalaysia.my/evisa/captchaImaging"
-        head = self.req.headers
+        head = copy(self.req.headers)
         head["x-requested-with"] = "XMLHttpRequest"
+        head["content-type"] = ""
         if res:
             head["referer"] = res.url
+            head["accept"] = "*/*"
+            head["accept-encoding"] = "gzip, deflate, br"
+            head["accept-language"] = "zh-CN,zh;q=0.9"
         img = self.req.get(url, headers=head)
         # img.url
-        img = img.content
-        return img
+        imgs = img.content
+        return imgs
 
     # 获取注册数据
     def get_data(self, res):
@@ -203,7 +215,18 @@ class Automation_malaysia():
         return data, rsp
 
     # 登录-填写信息-付款
-    def login(self):
+    def login(self, cf=False):
+        ri, rg = self.res_info, self.res_group
+        if not rg[34]:
+            updateHttp(where=f"gid={self.res[7]}", save={"ques": "航班未生成", "type": "0"})
+            print("航班未生成")
+            return "航班未生成"
+        infos = ri[3] and ri[5] and ri[9] and ri[10] and ri[12] and ri[20] and ri[23] and \
+            ri[24] and ri[25] and ri[26] and ri[29] and ri[31] and ri[32] and ri[33] and ri[34] and \
+            ri[35] and ri[36] and ri[37] and rg[31] and rg[18] and rg[24] and rg[36]
+        if not infos:
+            updateHttp(where=f"gid={self.res[7]}", save={"type": 0, "ques": "信息不完整"})
+            return "信息不完整"
         imgs = {i: f"{i}{self.res[7]}.png" for i in ["photo", "hz", "hb"]}
         try:
             # self.img_url(self.res, self.res_info, self.res_group)
@@ -224,6 +247,8 @@ class Automation_malaysia():
             answer = rsp.pred_rsp.value
             # answer = upload(3060)
             print("验证码为:", answer)
+            if not answer:
+                return
             # ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
             # answer = ans if ans else answer
 
@@ -260,13 +285,13 @@ class Automation_malaysia():
             print('加入ENTRI计划')
             res = self.req.get(join_evisa_url, timeout=10)
 
-            reg = r'<input type="hidden" name="checkAppNum1" id="checkAppNum1" value="(.*?)"\s?/>'
+            reg = r'<input type="hidden" name="checkAppNum\d" id="checkAppNum\d" value="(.*?)"\s?/>'
             uAppNumber = re.findall(reg, res.text)
             print(uAppNumber)
             # ======= 获取照片- 图片 ===========
-            rsp_phone = requests.get(self.res_info[23], timeout=10).content
+            rsp_photo = requests.get(self.res_info[23], timeout=10).content
 
-            if len(uAppNumber) > 0:
+            if len(uAppNumber) == 1:
                 uAppNumber = uAppNumber[0]
                 print(uAppNumber)
                 hisUrl = f'https://www.windowmalaysia.my/entri/check_payment_history.jsp?appNumber={uAppNumber}' \
@@ -295,12 +320,22 @@ class Automation_malaysia():
                 _files = {
                     'uAppNumber': (None, uAppNumber),
                     'uUser': (None, uUser),
-                    'uPhotoFile': ('photo.png', rsp_phone, 'image/png'),
+                    'uPhotoFile': ('photo.png', rsp_photo, 'image/png'),
                     'btnUploadPhoto': (None, '上传'),
                 }
                 res = self.req.post(
                     'https://www.windowmalaysia.my/entri/photo', files=_files, timeout=10)
                 print('上传照片信息成功')
+            elif len(uAppNumber) >= 2:
+                url = "https://www.windowmalaysia.my/entri/historyServ"
+                for i in range(len(uAppNumber)):
+                    reg = fr'<input type="hidden" name="checkAppNum{i+1}" id="checkAppNum{i+1}" value="(.*?)"\s?/>'
+                    data = {
+                        "chkDel": "1",
+                        "checkAppNum1": re.findall(reg, res.text)[0],
+                    }
+                    self.req.post(url, data=data)
+                return
             else:
                 print('in new visa')
                 registe_url = 'https://www.windowmalaysia.my/entri/registration.jsp'
@@ -318,7 +353,7 @@ class Automation_malaysia():
                     'uAppNumber': (None, uAppNumber),
                     'uUser': (None, uUser),
                     'uPhotoFile': (
-                        imgs["photo"], rsp_phone, 'image/png'),
+                        imgs["photo"], rsp_photo, 'image/png'),
                     'btnUploadPhoto': (None, '上传'),
                 }
                 # print(_files)
@@ -353,7 +388,7 @@ class Automation_malaysia():
                 _files = {
                     'uAppNumber': (None, uAppNumber),
                     'uUser': (None, uUser),
-                    'uItineraryFile': (imgs["hb"], rsp_hb, 'image/png'),
+                    'uItineraryFile': ("hb.pdf", rsp_hb, self.application(self.res_group[34])),
                     'btnUploadItinerary': (None, '上传'),
                 }
                 res = self.req.post(
@@ -383,6 +418,12 @@ class Automation_malaysia():
                 'user': uUser,
                 'appNumber': uAppNumber,
                 'appVisaNumber': appVisaNumber,
+                'appNationalityCode': 'CHN',
+                'appNatCode': 'CHN',
+                # 'appLastExitDt': '',
+                # 'appLastExitDay': '0',
+                # 'appLastExitMonth': '0',
+                # 'appLastExitYear': '0',
                 'appEmail': self.email,
                 'appPurposeStay': '11',
                 'expatCategory': '0',
@@ -419,28 +460,29 @@ class Automation_malaysia():
                 'appTravelMonthEnd': self.res_group[29],
                 'appTravelYearEnd': self.res_group[28],
                 'countryRouteHome': '131',
-                'countryTransitHome': '0',
+                # 'countryTransitHome': '0',
                 'countryDestinationHome': '47',
-                'appExitVia': 'Air',
+                # 'appExitVia': 'Air',
                 'appAddress1': self.res_info[9],
                 'appAddress2': '',
                 'appPostcode': self.res_info[26],
                 'appCity': self.res_info[25],
                 'showProvince': 'true',
                 'appProvince': self.res_info[24],
-                'appMysAddress1': self.res_group[31],
-                'appMysAddress2': self.res_group[18],
+                'appMysAddress1': self.res_group[31].upper(),
+                'appMysAddress2': self.res_group[18].upper(),
                 'appMysPostcode': self.res_group[24],
-                'appMysCity': self.res_group[36],
+                'appMysCity': self.res_group[36].upper(),
                 'paymentMethod': 'alipay',
                 'travelExceed': '0',
                 'termCondition': 'on',
                 'btnSave': 'AGREE'
             }
             # print(data)
+            if self.timeout: return
             res = self.req.post(
                 'https://www.windowmalaysia.my/entri/registration', data=data, timeout=10)
-            if 'egistration=alreadyExist' in res.url:
+            if 'registration=alreadyExist' in res.url:
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
                 data_photo = {"email": self.email, "text": "重复提交", "type": "3"}
                 print(data_photo)
@@ -555,6 +597,7 @@ class Automation_malaysia():
             # 付款
             # self.pay(uAppNumber, apliay_url)
             # self.alipay(uAppNumber, apliay_url)
+            if self.timeout: return
             red = RedisQueue(ALIPAY_KEY)
             print(red.hset(self.email, apliay_url))
             print(len(red.hgetall))
@@ -588,6 +631,8 @@ class Automation_malaysia():
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
             print("验证码为:", answer)
+            if not answer:
+                return
             url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&'\
                 f'txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&answer={answer}&_={int(time.time()*1000)}'
             res = self.req.get(url, timeout=10)
@@ -643,7 +688,7 @@ class Automation_malaysia():
 
             # -------------------------------------------------------------- #
             # ======= 获取照片 图片 ======================================= #
-            rsp_phone = requests.get(self.res_info[23], timeout=10).content
+            rsp_photo = requests.get(self.res_info[23], timeout=10).content
             # ======= 获取护照 图片 ======================================= #
             rsp_hz = requests.get(self.res_info[20], timeout=10).content
             # ======= 获取航班 图片 ======================================== #
@@ -654,7 +699,7 @@ class Automation_malaysia():
                 "uIndicator": (None, "update"),
                 "uApplicantId": (None, uApplicantId),
                 "uAppNumber": (None, uAppNumber),
-                "photo": ("photo.png", rsp_phone, 'image/png'),
+                "photo": ("photo.png", rsp_photo, 'image/png'),
                 "passportphoto": ("hz.png", rsp_hz, 'image/png'),
                 "passportphotoLast": ("hz.png", rsp_hz, 'image/png'),
                 "itenaryDoc": ("hb.png", rsp_hb, 'image/png'),
@@ -723,13 +768,13 @@ class Automation_malaysia():
             }
 
             if self.res_info[45]:
-                files["otherDoc"] = ("other.pdf", requests.get(self.res_info[45]).content, "application/pdf")
+                files["otherDoc"] = ("other.pdf", requests.get(self.res_info[45]).content, self.application(self.res_info[45]))
                 files["otherDocName"] = (None, r"C:\fakepath\other.pdf")
             if self.res_info[47]:
-                files["underageDoc"] = ("other.pdf", requests.get(self.res_info[47]).content, "application/pdf")
+                files["underageDoc"] = ("other.pdf", requests.get(self.res_info[47]).content, self.application(self.res_info[47]))
                 files["underageDocName"] = (None, r"C:\fakepath\other.pdf")
             if self.res_group[44]:
-                files["bookingDoc"] = ("jd.pdf", requests.get(self.res_group[44]).content, 'application/pdf')
+                files["bookingDoc"] = ("jd.pdf", requests.get(self.res_group[44]).content, self.application(self.res_group[44]))
                 files["bookingDocName"] = (None, r"C:\fakepath\jd.pdf")
 
             url = "https://www.windowmalaysia.my/evisa/applications"
@@ -739,11 +784,11 @@ class Automation_malaysia():
 
             reg = f"appNumber={uAppNumber}&appId=(.*?)['\\\"]"
             appId = re.findall(reg, res.text)[0]
-            """ with open("a.html", "wb") as f: f.write(res.content) """
+            # """ with open("a.html", "wb") as f: f.write(res.content) """
             # 查看照片是否合格
-            """ https://www.windowmalaysia.my/evisa/updatePhoto?appNumber=%s&appId=%s&dataX={}&dataY={}&dataWidth={}&dataHeight={}&dataRotate=0&idKeyProc=0&isEdit=true&evisaType=1
-            """
-            size = Image.open(BytesIO(rsp_phone)).size
+            # """ https://www.windowmalaysia.my/evisa/updatePhoto?appNumber=%s&appId=%s&dataX={}&dataY={}&dataWidth={}&dataHeight={}&dataRotate=0&idKeyProc=0&isEdit=true&evisaType=1
+            # """
+            size = Image.open(BytesIO(rsp_photo)).size
             murl = "https://www.windowmalaysia.my/evisa/updatePhoto?appNumber=%s&appId=%s&dataX={}&dataY={}"\
                 "&dataWidth={}&dataHeight={}&dataRotate=0&idKeyProc=0&isEdit=true&evisaType=1" % (
                     uAppNumber, appId
@@ -878,6 +923,8 @@ class Automation_malaysia():
             rsp = Captcha(1, img)
             answer = rsp.pred_rsp.value
             print("验证码为:", answer)
+            if not answer:
+                return
             # ans = input(f"\n初次识别为: {answer}\n若无误, 请按回车\n若错误, 请在此输入新验证码：\n")
 
             url = f'https://www.windowmalaysia.my/evisa/login?ipAddress={ipaddr}&txtEmail={self.email}&txtPassword={GLOBAL_DATA[4]}&'\
@@ -909,6 +956,7 @@ class Automation_malaysia():
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getSubmitStatus"
                 data = {"email": self.res[1], "status": "2"}
                 requests.post(url, data, timeout=10)
+                return
             print(appnumber)
             if '繼續' not in res.text:
                 print('签证已出，正在提取...')
@@ -993,8 +1041,8 @@ class Automation_malaysia():
                 break
         if i > 20:
             i = 24
-            while i >= 24:
-                print(f'进入照片页， 控制3: {i}')
+            while i >= -24:
+                print(f'进入照片页， 控制3: {-i}')
                 url = murl.format(0, -i, width, height - i * 1.41)
                 res = self.req.get(url, timeout=10)
                 print('发送请求，进行照片判断')
@@ -1017,3 +1065,8 @@ class Automation_malaysia():
                 requests.post(url, data_photo, timeout=10)
                 return 1
         return 0
+
+    #判断任务是否超时
+    @property
+    def timeout(self):
+        return time.time() - self.start_time > 300

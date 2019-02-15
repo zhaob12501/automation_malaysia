@@ -6,7 +6,8 @@ from random import random
 import redis
 import requests
 from celery import Celery
-from celery.exceptions import SoftTimeLimitExceeded
+
+import celeryconfig
 from automation_malaysia import Automation_malaysia
 from Base import Base
 from email163 import Email
@@ -15,8 +16,8 @@ from pipelines import Conn, RedisQueue
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
-from settings import (ALIPAY_KEY, MALA_NUM_KEY, BROKER_URL, GLOBAL_DATA, MALAYSIA_KEY, NC,
-                      alipay_Keys, pool, updateHttp)
+from settings import (ALIPAY_KEY, BROKER_URL, GLOBAL_DATA, MALA_NUM_KEY,
+                      MALAYSIA_KEY, NC, alipay_Keys, pool, updateHttp)
 
 # 1-支付宝
 alipay_user = GLOBAL_DATA[5]
@@ -38,16 +39,12 @@ ali_no_win = False
 #  celery -A tasks worker -c 3 -l info
 #  catching classes that do not inherit from BaseException is not allowed
 app = Celery("tasks", broker=BROKER_URL, backend=BROKER_URL)
-
-app.conf.update(
-    TIME_ZONE='UTC',
-    USE_TZ=True,
-    CELERY_ENABLE_UTC=True,
-    CELERY_TIMEZONE="UTC"
-)
+# 引入配置文件
+app.config_from_object("celeryconfig")
 
 
-@app.task(soft_time_limit=300)
+
+@app.task
 def task_malaysia(res):
     print(res)
     while 1:
@@ -76,11 +73,21 @@ def task_malaysia(res):
 
         # 邮箱激活
         elif res[3] == 1 and res[4] != 1:
+            rac = redis.Redis(connection_pool=pool)
+            if rac.get(f"act:{res[1]}"):
+                rac.set(f"act:{res[1]}", int(rac.get(f"act:{res[1]}")) + 1)
+            else:
+                rac.set(f"act:{res[1]}", 1)
+            print(f"Task 激活: {int(rac.get(f'act:{res[1]}'))}")
             e = Email()
             print('=\n==============\n邮箱激活\n==============')
             if e.getData(res[1], res[2]):
                 print("激活成功 下一步....")
-
+            elif int(rac.get(f"act:{res[1]}")) >= 10:
+                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
+                data = {"email": res[1], "status": "2"}
+                requests.post(url, data=data, timeout=10)
+                rac.delete(f"act:{res[1]}")
         elif "eNTRI" in res_group[0][9]:
             print('\n--- 15天 ----\n')
             # 邮箱登录
@@ -104,8 +111,8 @@ def task_malaysia(res):
                 # r.get_visa()
                 print("获取签证「30 天」")
                 updateHttp(tb="business_email", save={"type": "4"}, where="gid=%s" % res[7])
-    except SoftTimeLimitExceeded as e:
-        print(f"SoftTimeLimitExceeded: {e}")
+            pass
+        pass
     except Exception as e:
         print(f"Exception: {e}")
     finally:
@@ -113,7 +120,10 @@ def task_malaysia(res):
         red.hdel(res[7])
         red_num.hincrby(res[9], -1)
 
-
+# @app.task(soft_time_limit=3)
+# def test():
+#     time.sleep(4)
+#     return 1
 # @app.task()
 # def register(res):
 #     con = Conn()

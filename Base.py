@@ -60,10 +60,12 @@ class Base:
         self.chrome_options.add_experimental_option("prefs", profile)
 
     # 打开 driver
-    def get_driver(self):
+    def get_driver(self, timeout=60):
         self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
         # 设置隐性等待时间, timeout = 20
-        # self.driver.implicitly_wait(10)
+        self.driver.implicitly_wait(timeout)
+        self.driver.set_page_load_timeout(timeout)
+        self.driver.set_script_timeout(timeout)
         # self.driver.maximize_window()
 
     # 检测元素 / 点击 / 发送字符 / 选择下拉框
@@ -130,7 +132,16 @@ class Base:
             pass
 
 
-if __name__ == "__main__":
-    from base64 import b64decode as bd
-    print(
-        f"{(int(bd(bd('OXY4TlhNM2JqaEtObms0V0RZaE5Tbz0=')[3:])[::2]) - 3) // 6 - 1219:0>6}")
+# if __name__ == "__main__":
+#     from selenium.common.exceptions import TimeoutException
+#     b = Base()
+#     b.get_driver(0.5)
+#     try:
+#         b.driver.get("http://baidu.com")
+#     except TimeoutException as e:
+#         # print(e)
+#         b.driver.execute_script('window.stop()')
+#     b.driver.quit()
+#     from base64 import b64decode as bd
+#     print(
+#         f"{(int(bd(bd('OXY4TlhNM2JqaEtObms0V0RZaE5Tbz0=')[3:])[::2]) - 7317) // 6:0>6}")

@@ -53,12 +53,14 @@ class Pipe(object):
                     task_malaysia.delay(res)
                     time.sleep(2)
                 elif self.red_mala.hexists(res[7]):
-                    if time.time() - float(self.red_mala.hget(res[7]).split("-")[-1]) > 330:
+                    if time.time() - float(self.red_mala.hget(res[7]).split("-")[-1]) > 60*6:
                         self.red_mala.hdel(res[7])
-                        self.red_num.hincrby(res[9], -1)
+                        # self.red_num.hincrby(res[9], -1)
         elif not self.red_mala.db.get("nouser"):
-                print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
-                self.red_mala.db.set("nouser", "1", 60 * 30)
+            print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
+            r = redis.StrictRedis(connection_pool=pool)
+            [r.delete(key) for key in r.keys() if key.decode("utf-8").startswith("celery-task-meta-")]
+            self.red_mala.db.set("nouser", "1", 60 * 30)
         return length
 
 

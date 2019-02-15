@@ -1,0 +1,6 @@
+TIME_ZONE='UTC'
+USE_TZ=True
+CELERY_ENABLE_UTC=True
+CELERY_TIMEZONE="UTC"
+# 任务过期时间,celery任务执行结果的超时时间
+# CELERY_TASK_RESULT_EXPIRES = 60 * 5
