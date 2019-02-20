@@ -153,8 +153,18 @@ class Email(Base):
             content = self.driver.find_element_by_xpath('//body/div/div[4]/p[2]/a')
             em_url = content.get_attribute('href')
             print(em_url)
-            requests.get(em_url)
-            print("激活成功")
+            for _ in range(5):
+                try:
+                    requests.get(em_url, timeout=20)
+                    print("激活成功")
+                    break
+                except Exception:
+                    pass
+            else:
+                url_02 = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
+                data_02 = {"email": email, "status": "4"}
+                requests.post(url_02, data_02)
+                return 0
             act_url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
             act_data = {"email": email, "status": "3"}
             requests.post(act_url, data=act_data)
@@ -173,5 +183,5 @@ class Email(Base):
 
 
 if __name__ == '__main__':
-    e = Email()
-    e.getData(1, 1)
+    e = Email(no_win=False)
+    e.getData("taosangp1743", "bikwn759")

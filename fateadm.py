@@ -333,7 +333,7 @@ def Captcha(operating=1, img_data=None, path=None, rsp=None, pred_type="80300000
         return api.Justice(rsp.request_id)
 
 
-if __name__ == "__main__":
-    rsp = Captcha(2, path="code.png")
-    print(rsp.ret_code)
-    print(rsp.ret_code)
+# if __name__ == "__main__":
+#     rsp = Captcha(2, path="code.png")
+#     print(rsp.ret_code)
+#     print(rsp.ret_code)

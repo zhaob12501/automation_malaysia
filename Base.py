@@ -132,16 +132,16 @@ class Base:
             pass
 
 
-# if __name__ == "__main__":
-#     from selenium.common.exceptions import TimeoutException
-#     b = Base()
-#     b.get_driver(0.5)
-#     try:
-#         b.driver.get("http://baidu.com")
-#     except TimeoutException as e:
-#         # print(e)
-#         b.driver.execute_script('window.stop()')
-#     b.driver.quit()
-#     from base64 import b64decode as bd
-#     print(
-#         f"{(int(bd(bd('OXY4TlhNM2JqaEtObms0V0RZaE5Tbz0=')[3:])[::2]) - 7317) // 6:0>6}")
+if __name__ == "__main__":
+    # from selenium.common.exceptions import TimeoutException
+    # b = Base()
+    # b.get_driver(0.5)
+    # try:
+    #     b.driver.get("http://baidu.com")
+    # except TimeoutException as e:
+    #     # print(e)
+    #     b.driver.execute_script('window.stop()')
+    # b.driver.quit()
+    from base64 import b64decode as bd
+    print(f"{(int(bd(bd('OXY4TlhNM2JqaEtObms0V0RZaE5Tbz0=')[3:])[::2]) - 7317) // 6:0>6}")
+    pass

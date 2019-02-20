@@ -19,29 +19,11 @@ from selenium.webdriver.common.keys import Keys
 from settings import (ALIPAY_KEY, BROKER_URL, GLOBAL_DATA, MALA_NUM_KEY,
                       MALAYSIA_KEY, NC, alipay_Keys, pool, updateHttp)
 
-# 1-支付宝
-alipay_user = GLOBAL_DATA[5]
-alipay_pwd = GLOBAL_DATA[6]
-
-ali_no_win = True
-st_input = False
-redis_time = 15
-
-# 2-支付宝
-# alipay_user = GLOBAL_DATA[9]
-# alipay_pwd  = GLOBAL_DATA[10]
-# alipay_Keys = (
-#     Keys.NUMPAD8, Keys.NUMPAD3, Keys.NUMPAD0,
-#     Keys.NUMPAD6, Keys.NUMPAD0, Keys.NUMPAD4)
-ali_no_win = False
-# st_input = True
-
 #  celery -A tasks worker -c 3 -l info
 #  catching classes that do not inherit from BaseException is not allowed
 app = Celery("tasks", broker=BROKER_URL, backend=BROKER_URL)
 # 引入配置文件
 app.config_from_object("celeryconfig")
-
 
 
 @app.task

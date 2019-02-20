@@ -20,7 +20,7 @@ from selenium.webdriver.common.keys import Keys
 
 from Base import Base
 from fateadm import Captcha
-from pipelines import RedisQueue
+from pipelines import RedisQueue, Conn
 from settings import ALIPAY_KEY, GLOBAL_DATA, NC, alipay_Keys, pool, redis, updateHttp
 
 # from selenium.webdriver.support.ui import WebDriverWait
@@ -101,15 +101,15 @@ class Automation_malaysia():
         url = "https://www.windowmalaysia.my/evisa/vlno_ajax_checkUsername.jsp"
         email_res = self.req.post(url, data={"email": self.email}, timeout=10)
         if email_res.text.strip():
-            try:
-                print('邮箱已被注册，更换邮箱...')
-                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/replaceEmail"
-                data_p = {"email": self.email}
-                res = requests.post(url, data_p, timeout=10).json()
-            except Exception:
-                url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
-                data = {"email": self.email, "status": "1"}
-                rs = requests.post(url, data=data, timeout=10)
+            # try:
+            #     print('邮箱已被注册，更换邮箱...')
+            #     url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/replaceEmail"
+            #     data_p = {"email": self.email}
+            #     res = requests.post(url, data_p, timeout=10).json()
+            # except Exception:
+            url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/getEmailStatus"
+            data = {"email": self.email, "status": "1"}
+            rs = requests.post(url, data=data, timeout=10)
             return 0
 
         data, _ = self.get_data(res)
@@ -293,6 +293,8 @@ class Automation_malaysia():
 
             if len(uAppNumber) == 1:
                 uAppNumber = uAppNumber[0]
+                if self.res[10] and uAppNumber != self.res[10]:
+                    return
                 print(uAppNumber)
                 hisUrl = f'https://www.windowmalaysia.my/entri/check_payment_history.jsp?appNumber={uAppNumber}' \
                          f'&_={int(time.time()*1000)}'
@@ -323,8 +325,7 @@ class Automation_malaysia():
                     'uPhotoFile': ('photo.png', rsp_photo, 'image/png'),
                     'btnUploadPhoto': (None, '上传'),
                 }
-                res = self.req.post(
-                    'https://www.windowmalaysia.my/entri/photo', files=_files, timeout=10)
+                res = self.req.post('https://www.windowmalaysia.my/entri/photo', files=_files, timeout=10)
                 print('上传照片信息成功')
             elif len(uAppNumber) >= 2:
                 url = "https://www.windowmalaysia.my/entri/historyServ"
@@ -335,6 +336,7 @@ class Automation_malaysia():
                         "checkAppNum1": re.findall(reg, res.text)[0],
                     }
                     self.req.post(url, data=data)
+                updateHttp(where=f"gid={self.res[7]}", save={"application": None})
                 return
             else:
                 print('in new visa')
@@ -480,9 +482,18 @@ class Automation_malaysia():
             }
             # print(data)
             if self.timeout: return
+            sql = "SELECT application From dc_business_email WHERE gid=%s" % self.res[7]
+            con = Conn()
+            application_in_mysql = con.select_one(sql)[0]
+            if application_in_mysql and application_in_mysql != uAppNumber:
+                return
             res = self.req.post(
                 'https://www.windowmalaysia.my/entri/registration', data=data, timeout=10)
             if 'registration=alreadyExist' in res.url:
+                res = self.req.get("https://www.windowmalaysia.my/entri/history.jsp")
+                applications = re.findall(r'<td align="center">(\d+?)</td>', res.text)
+                if len(applications):
+                    return
                 url = "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/question"
                 data_photo = {"email": self.email, "text": "重复提交", "type": "3"}
                 print(data_photo)
@@ -509,11 +520,12 @@ class Automation_malaysia():
                 requests.get(
                     "http://www.mobtop.com.cn/index.php?s=/Api/MalaysiaApi/malaysia_refund/gid/{}".format(self.res[7]), timeout=10)
                 return
+            if not application_in_mysql:
+                updateHttp(where=f"gid={self.res[7]}", save={"application": uAppNumber})
             # print(res)
             # 查看照片是否合格
             murl = 'https://www.windowmalaysia.my/entri/updatePhoto?appNumber=%s&dataX={0}&'\
-                'dataY={1}&dataWidth={2}&dataHeight={3}&dataRotate=0&isEdit=true' % (
-                    uAppNumber)
+                'dataY={1}&dataWidth={2}&dataHeight={3}&dataRotate=0&isEdit=true' % (uAppNumber)
             print(f'进入照片页--原照片')
             res = self.req.get(murl.format(0, 0, 213, 296), timeout=10)
             print('发送请求，进行照片判断')
@@ -1063,6 +1075,7 @@ class Automation_malaysia():
                 print('123s')
                 print(data_photo)
                 requests.post(url, data_photo, timeout=10)
+                # updateHttp(where=f"email={self.res[1]}", save={"ques": "照片不合格", "type": "0"})
                 return 1
         return 0
 

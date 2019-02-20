@@ -5,7 +5,7 @@ import requests
 
 from pipelines import Conn, RedisQueue
 from settings import ALIPAY_KEY, MALAYSIA_KEY, MALA_NUM_KEY, NUM, pool, redis
-from tasks import task_malaysia
+from tasks import task_malaysia, get_visa
 
 
 class Pipe(object):
@@ -23,7 +23,7 @@ class Pipe(object):
         length = self.red_mala.hlen
         if length >= leng:
             return length
-        sql = 'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type, mpid ' \
+        sql = 'select username, email_no, email_pwd, reg_status, act_status, sub_status, visa_status, gid, type, mpid, application ' \
             'from dc_business_email where type = 1 or type=2'  # limit %s' % NUM
         resp = self.conn.select_all(sql)
         if len(resp):
@@ -38,6 +38,11 @@ class Pipe(object):
                 # 如果线程已满, 跳出
                 if length >= leng or length >= (self.red_num.qsize + 5):
                     break
+                # 获取电子签
+                if res[5] == 1 and res[6] != 1 and self.red_mala.db.setnx(res[1], 1):
+                    get_visa.delay(res)
+                    time.sleep(2)
+                    continue
                 # 所有 mpid 占用线程个数的最小值
                 mins = min([int(self.red_num.hget(j)) if not self.red_num.hset(j, 0) else 0 for j in set(i[9] for i in resp)])
                 # 本个 mpid 占用线程的个数 是否最小 以及 gid 是否存在
@@ -52,10 +57,11 @@ class Pipe(object):
                     print("\n", insert_info, "\n")
                     task_malaysia.delay(res)
                     time.sleep(2)
-                elif self.red_mala.hexists(res[7]):
-                    if time.time() - float(self.red_mala.hget(res[7]).split("-")[-1]) > 60*6:
-                        self.red_mala.hdel(res[7])
-                        # self.red_num.hincrby(res[9], -1)
+                    
+                # elif self.red_mala.hexists(res[7]):
+                #     if time.time() - float(self.red_mala.hget(res[7]).split("-")[-1]) > 60*6:
+                #         self.red_mala.hdel(res[7])
+                #         self.red_num.hincrby(res[9], -1)
         elif not self.red_mala.db.get("nouser"):
             print("没有查到匹配的数据...", time.strftime("%Y-%m-%d %H:%M:%S"))
             r = redis.StrictRedis(connection_pool=pool)

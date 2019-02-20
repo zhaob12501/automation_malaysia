@@ -1,4 +1,5 @@
 import json
+import re
 import time
 
 import requests
@@ -76,6 +77,17 @@ def ali_pay(email, alipay_url, noWin=False, st_input=False):
                 # ====================================== #
                 # 短信验证码
                 # ====================================== #
+                st = timess()
+                try:
+                    driver.Wait(xpath='//*[@id="J_authSubmit"]', text=NC)
+                    ls = re.findall(r"id=['\"]ackcode['\"]", driver.driver.page_source)
+                    if ls and ls[0]:
+                        driver.driver.find_element_by_id('ackcode')
+                        driver.Wait("ackcode", input("发现短信验证码,请输入短信验证码\n>>>"))
+                except Exception:
+                    pass
+                print(timess() - st)
+
                 driver.Wait(xpath='//*[@id="J_authSubmit"]', sleep=1)
                 # try:
                 #     # driver.driver.switch_to.frame(driver.Wait(xpath='//iframe[@frameborder="no"]', text=NC, sleep=2))

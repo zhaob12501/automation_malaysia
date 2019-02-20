@@ -20,7 +20,7 @@ if __name__ == "__main__":
                     a = ali_pay(email, url, False, st_input=st_input)
                     del a
                     red.db.delete("nouser_pay")
-                    print("\n", "-*" * 20, "\n", "AliPay Over", "\n", email, "\n", timess()-st, "\n", "-*" * 20)
+                    print("\n", "-*" * 20, "\n", "AliPay Over", "\n", email, "\n", timess() - st, "\n", "-*" * 20)
             else:
                 if len(red.hgetall) != len(red.lgetall):
                     [red.hdel(i) for i in red.hgetall if i not in red.lgetall]
